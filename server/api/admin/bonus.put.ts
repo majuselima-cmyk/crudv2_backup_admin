@@ -1,0 +1,174 @@
+/**
+ * Update bonus settings
+ * PUT /api/admin/bonus
+ * Body: { referral_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, multiplier_percentage, is_active }
+ */
+import { createClient } from '@supabase/supabase-js'
+
+export default defineEventHandler(async (event) => {
+  try {
+    const body = await readBody(event)
+    const {
+      referral_percentage,
+      matching_level1_percentage,
+      matching_level2_percentage,
+      matching_level3_percentage,
+      loyalty_percentage,
+      reward_percentage,
+      multiplier_percentage,
+      multiplier_increment_percentage,
+      multiplier_increment_days,
+      is_active
+    } = body
+
+    // Validate required fields
+    if (
+      referral_percentage === undefined ||
+      matching_level1_percentage === undefined ||
+      matching_level2_percentage === undefined ||
+      matching_level3_percentage === undefined ||
+      loyalty_percentage === undefined ||
+      reward_percentage === undefined ||
+      multiplier_percentage === undefined ||
+      multiplier_increment_percentage === undefined ||
+      multiplier_increment_days === undefined ||
+      is_active === undefined
+    ) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Semua field wajib diisi'
+      })
+    }
+
+    // Validate percentage ranges (0-100)
+    const percentages = [
+      { name: 'Referral', value: referral_percentage },
+      { name: 'Matching Level 1', value: matching_level1_percentage },
+      { name: 'Matching Level 2', value: matching_level2_percentage },
+      { name: 'Matching Level 3', value: matching_level3_percentage },
+      { name: 'Loyalty', value: loyalty_percentage },
+      { name: 'Reward', value: reward_percentage },
+      { name: 'Multiplier', value: multiplier_percentage },
+      { name: 'Multiplier Increment', value: multiplier_increment_percentage }
+    ]
+
+    // Validate multiplier_increment_days (min 1 day)
+    const incrementDays = parseInt(multiplier_increment_days)
+    if (isNaN(incrementDays) || incrementDays < 1) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Multiplier increment days harus minimal 1 hari'
+      })
+    }
+
+    for (const item of percentages) {
+      const value = parseFloat(item.value)
+      if (isNaN(value) || value < 0 || value > 100) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: `${item.name} harus antara 0 dan 100`
+        })
+      }
+    }
+
+    const config = useRuntimeConfig()
+    const supabaseUrl = config.public?.supabaseUrl || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+    const supabaseServiceKey = config.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Supabase configuration is missing'
+      })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+
+    // Check if settings exist
+    const { data: existingSettings } = await supabase
+      .from('bonus_settings')
+      .select('id')
+      .limit(1)
+      .single()
+
+    let updatedSettings
+
+    if (existingSettings) {
+      // Update existing settings
+      const { data, error: updateError } = await supabase
+        .from('bonus_settings')
+        .update({
+          referral_percentage: parseFloat(referral_percentage),
+          matching_level1_percentage: parseFloat(matching_level1_percentage),
+          matching_level2_percentage: parseFloat(matching_level2_percentage),
+          matching_level3_percentage: parseFloat(matching_level3_percentage),
+          loyalty_percentage: parseFloat(loyalty_percentage),
+          reward_percentage: parseFloat(reward_percentage),
+          multiplier_percentage: parseFloat(multiplier_percentage),
+          multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
+          multiplier_increment_days: parseInt(multiplier_increment_days),
+          is_active: Boolean(is_active)
+        })
+        .eq('id', existingSettings.id)
+        .select('*')
+        .single()
+
+      if (updateError) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: updateError.message || 'Gagal mengupdate pengaturan bonus'
+        })
+      }
+
+      updatedSettings = data
+    } else {
+      // Create new settings if doesn't exist
+      const { data, error: insertError } = await supabase
+        .from('bonus_settings')
+        .insert({
+          referral_percentage: parseFloat(referral_percentage),
+          matching_level1_percentage: parseFloat(matching_level1_percentage),
+          matching_level2_percentage: parseFloat(matching_level2_percentage),
+          matching_level3_percentage: parseFloat(matching_level3_percentage),
+          loyalty_percentage: parseFloat(loyalty_percentage),
+          reward_percentage: parseFloat(reward_percentage),
+          multiplier_percentage: parseFloat(multiplier_percentage),
+          multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
+          multiplier_increment_days: parseInt(multiplier_increment_days),
+          is_active: Boolean(is_active)
+        })
+        .select('*')
+        .single()
+
+      if (insertError) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: insertError.message || 'Gagal membuat pengaturan bonus'
+        })
+      }
+
+      updatedSettings = data
+    }
+
+    return {
+      success: true,
+      message: 'Pengaturan bonus berhasil disimpan',
+      data: updatedSettings
+    }
+  } catch (error: any) {
+    if (error && typeof error === 'object' && error.statusCode) {
+      throw error
+    }
+
+    throw createError({
+      statusCode: error?.statusCode || 500,
+      statusMessage: error?.message || 'Gagal menyimpan pengaturan bonus'
+    })
+  }
+})
+
