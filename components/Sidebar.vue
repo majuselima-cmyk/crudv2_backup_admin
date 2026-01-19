@@ -18,14 +18,14 @@
   <!-- Sidebar -->
   <aside
     :class="[
-      'fixed top-0 left-0 h-screen bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out w-64 shadow-sm',
+      'fixed top-0 left-0 h-screen backdrop-blur-md bg-white/95 border-r border-gray-200/50 z-50 transition-transform duration-300 ease-in-out w-64 shadow-lg',
       isMobile ? (isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0 lg:translate-x-0'
     ]"
   >
     <div class="flex flex-col h-full">
       <!-- Logo/Header -->
-      <div class="flex items-center justify-between p-4 border-b border-gray-200">
-        <h2 class="text-xl font-bold text-blue-600">Dashboard Admin</h2>
+      <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50/50 to-transparent">
+        <h2 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Dashboard Admin</h2>
         <button
           @click.stop="closeMobileMenu"
           type="button"
@@ -43,10 +43,10 @@
               :to="item.path"
               @click.stop="closeMobileMenu"
               :class="[
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition',
+                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                 isActive(item.path)
-                  ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                  ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-600 border border-blue-200 shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
               ]"
             >
               <Icon :name="item.icon" size="md" />
@@ -70,7 +70,7 @@
         <button
           @click.stop="handleLogout"
           type="button"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition border border-red-200 cursor-pointer"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-200 border border-red-200 cursor-pointer hover:shadow-sm"
         >
           <Icon name="logout" size="md" />
           <span class="font-medium">Keluar</span>

@@ -63,3 +63,6 @@ CREATE POLICY "Admin can delete wallets"
   USING (true);
 
 
+
+
+

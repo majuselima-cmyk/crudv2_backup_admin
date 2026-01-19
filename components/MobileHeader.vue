@@ -1,5 +1,5 @@
 <template>
-  <header class="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+  <header class="lg:hidden sticky top-0 z-30 backdrop-blur-md bg-white/90 border-b border-gray-200/50 shadow-lg">
     <div class="flex items-center justify-between p-4">
       <button
         @click.stop="handleToggle"
@@ -9,7 +9,7 @@
         <Icon name="menu" size="md" class="text-gray-700" />
       </button>
       
-      <h1 class="text-lg font-bold text-blue-600">
+      <h1 class="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
         Dashboard Admin
       </h1>
       
