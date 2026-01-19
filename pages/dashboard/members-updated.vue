@@ -102,7 +102,7 @@
                       :disabled="member.total_downline === 0"
                     >
                       {{ member.total_downline || 0 }}
-                      <Icon v-if="member.total_downline > 0" name="arrow-right" size="sm" class="ml-1" />
+                      <span v-if="member.total_downline > 0" class="ml-1">👁️</span>
                     </button>
                   </td>
                   <td class="py-4 px-4">

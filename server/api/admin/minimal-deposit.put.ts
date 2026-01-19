@@ -1,56 +1,29 @@
 /**
- * Update coin settings
- * PUT /api/admin/coin
- * Body: { coin_name, total_supply, price_per_coin_usdt, presale_enabled, presale_price_usdt, presale_min_purchase, presale_max_purchase, presale_start_date, presale_end_date, is_active }
+ * Update minimal deposit settings
+ * PUT /api/admin/minimal-deposit
+ * Body: { minimal_deposit_usdt }
  */
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const {
-      coin_name,
-      total_supply,
-      price_per_coin_usdt,
-      presale_price_usdt,
-      leader_price_usdt,
-      is_active
-    } = body
+    const { minimal_deposit_usdt } = body
 
     // Validate required fields
-    if (!coin_name || total_supply === undefined || price_per_coin_usdt === undefined || presale_price_usdt === undefined || leader_price_usdt === undefined || is_active === undefined) {
+    if (minimal_deposit_usdt === undefined || minimal_deposit_usdt === null) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Semua field wajib diisi'
+        statusMessage: 'Minimal deposit wajib diisi'
       })
     }
 
     // Validate values
-    if (parseFloat(total_supply) < 0) {
+    const depositValue = parseFloat(minimal_deposit_usdt)
+    if (isNaN(depositValue) || depositValue < 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Total supply tidak boleh negatif'
-      })
-    }
-
-    if (parseFloat(price_per_coin_usdt) < 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Harga per coin tidak boleh negatif'
-      })
-    }
-
-    if (parseFloat(presale_price_usdt) < 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Harga VIP tidak boleh negatif'
-      })
-    }
-
-    if (parseFloat(leader_price_usdt) < 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Harga Leader tidak boleh negatif'
+        statusMessage: 'Minimal deposit harus berupa angka positif'
       })
     }
 
@@ -74,7 +47,7 @@ export default defineEventHandler(async (event) => {
 
     // Check if settings exist
     const { data: existingSettings } = await supabase
-      .from('coin_settings')
+      .from('minimal_deposit_settings')
       .select('id')
       .limit(1)
       .single()
@@ -82,18 +55,13 @@ export default defineEventHandler(async (event) => {
     let updatedSettings
 
     const updateData: any = {
-      coin_name: coin_name.trim(),
-      total_supply: parseFloat(total_supply),
-      price_per_coin_usdt: parseFloat(price_per_coin_usdt),
-      presale_price_usdt: parseFloat(presale_price_usdt),
-      leader_price_usdt: parseFloat(leader_price_usdt),
-      is_active: Boolean(is_active)
+      minimal_deposit_usdt: depositValue
     }
 
     if (existingSettings) {
       // Update existing settings
       const { data, error: updateError } = await supabase
-        .from('coin_settings')
+        .from('minimal_deposit_settings')
         .update(updateData)
         .eq('id', existingSettings.id)
         .select('*')
@@ -102,7 +70,7 @@ export default defineEventHandler(async (event) => {
       if (updateError) {
         throw createError({
           statusCode: 500,
-          statusMessage: updateError.message || 'Gagal mengupdate pengaturan coin'
+          statusMessage: updateError.message || 'Gagal mengupdate pengaturan minimal deposit'
         })
       }
 
@@ -110,7 +78,7 @@ export default defineEventHandler(async (event) => {
     } else {
       // Create new settings if doesn't exist
       const { data, error: insertError } = await supabase
-        .from('coin_settings')
+        .from('minimal_deposit_settings')
         .insert(updateData)
         .select('*')
         .single()
@@ -118,7 +86,7 @@ export default defineEventHandler(async (event) => {
       if (insertError) {
         throw createError({
           statusCode: 500,
-          statusMessage: insertError.message || 'Gagal membuat pengaturan coin'
+          statusMessage: insertError.message || 'Gagal membuat pengaturan minimal deposit'
         })
       }
 
@@ -127,7 +95,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      message: 'Pengaturan coin berhasil disimpan',
+      message: 'Pengaturan minimal deposit berhasil disimpan',
       data: updatedSettings
     }
   } catch (error: any) {
@@ -137,7 +105,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: error?.statusCode || 500,
-      statusMessage: error?.message || 'Gagal menyimpan pengaturan coin'
+      statusMessage: error?.message || 'Gagal menyimpan pengaturan minimal deposit'
     })
   }
 })

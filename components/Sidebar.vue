@@ -131,6 +131,11 @@ const menuItems = computed(() => [
     icon: 'settings'
   },
   {
+    path: '/dashboard/minimal-deposit',
+    label: 'Minimal Deposit',
+    icon: 'settings'
+  },
+  {
     path: '/dashboard/settings',
     label: 'Pengaturan',
     icon: 'settings'

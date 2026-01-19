@@ -1,6 +1,6 @@
 /**
- * Get coin settings
- * GET /api/admin/coin
+ * Get minimal deposit settings
+ * GET /api/admin/minimal-deposit
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -24,9 +24,9 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Get coin settings (should only have one record)
+    // Get minimal deposit settings (should only have one record)
     const { data: settings, error } = await supabase
-      .from('coin_settings')
+      .from('minimal_deposit_settings')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
       throw createError({
         statusCode: 500,
-        statusMessage: error.message || 'Gagal mengambil pengaturan coin'
+        statusMessage: error.message || 'Gagal mengambil pengaturan minimal deposit'
       })
     }
 
@@ -44,12 +44,7 @@ export default defineEventHandler(async (event) => {
       return {
         success: true,
         data: {
-          coin_name: 'MyCoin',
-          total_supply: 999999999.00,
-          price_per_coin_usdt: 0.5000,
-          presale_price_usdt: 0.4000,
-          leader_price_usdt: 0.5000,
-          is_active: true
+          minimal_deposit_usdt: 10.00
         }
       }
     }
@@ -65,7 +60,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: error?.statusCode || 500,
-      statusMessage: error?.message || 'Gagal mengambil pengaturan coin'
+      statusMessage: error?.message || 'Gagal mengambil pengaturan minimal deposit'
     })
   }
 })

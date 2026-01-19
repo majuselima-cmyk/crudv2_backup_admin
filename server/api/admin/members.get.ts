@@ -37,9 +37,43 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Calculate total downline for each member
+    const membersWithDownline = await Promise.all(
+      (members || []).map(async (member) => {
+        // Count direct referrals (downline level 1)
+        // Try by ID first, then by referral_code
+        let downlineCount = 0
+        
+        // Method 1: Count by referred_by = member.id
+        const { count: countById } = await supabase
+          .from('members')
+          .select('*', { count: 'exact', head: true })
+          .eq('referred_by', member.id)
+        
+        if (countById !== null) {
+          downlineCount = countById
+        } else if (member.referral_code) {
+          // Method 2: Count by referred_by = member.referral_code
+          const { count: countByCode } = await supabase
+            .from('members')
+            .select('*', { count: 'exact', head: true })
+            .eq('referred_by', member.referral_code)
+          
+          if (countByCode !== null) {
+            downlineCount = countByCode
+          }
+        }
+        
+        return {
+          ...member,
+          total_downline: downlineCount || 0
+        }
+      })
+    )
+
     return {
       success: true,
-      data: members || []
+      data: membersWithDownline || []
     }
   } catch (error: any) {
     if (error && typeof error === 'object' && error.statusCode) {
@@ -52,4 +86,3 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
-
