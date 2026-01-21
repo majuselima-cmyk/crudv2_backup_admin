@@ -15,7 +15,7 @@
       <header class="hidden lg:block sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
         <div class="flex items-center justify-between px-6 py-4">
           <h1 class="text-2xl font-bold text-blue-600">
-            Konten Member
+            Member
           </h1>
         </div>
       </header>
@@ -46,6 +46,14 @@
           </div>
         </div>
 
+        <!-- Error Message -->
+        <div v-if="errorMessage && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div class="flex items-center gap-2">
+            <Icon name="x-circle" size="md" class="text-red-600" />
+            <p class="text-sm text-red-600">{{ errorMessage }}</p>
+          </div>
+        </div>
+
         <!-- Loading State -->
         <div v-if="loading" class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <div class="flex items-center justify-center">
@@ -55,11 +63,11 @@
         </div>
 
         <!-- Data Table Card -->
-        <div v-else class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div v-else-if="!loading" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
           <!-- Table Header -->
           <div class="p-6 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">
-              Daftar Member ({{ filteredMembers.length }})
+              Daftar Member ({{ totalCount }})
             </h2>
           </div>
 
@@ -73,6 +81,8 @@
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Username</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Referral Code</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Total Downline</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Total Balance</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Saldo Coin</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Member Type</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Withdraw</th>
@@ -104,6 +114,26 @@
                       {{ member.total_downline || 0 }}
                       <Icon v-if="member.total_downline > 0" name="arrow-right" size="sm" class="ml-1" />
                     </button>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-semibold text-green-600">
+                        {{ formatCurrency(member.total_balance || 0) }} USDT
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        Total Deposit Sukses
+                      </span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-semibold text-blue-600">
+                        {{ formatNumber(member.total_coin_from_deposits || 0) }} Coin
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        Total Coin dari Deposit
+                      </span>
+                    </div>
                   </td>
                   <td class="py-4 px-4">
                     <span 
@@ -181,13 +211,119 @@
                     </div>
                   </td>
                 </tr>
-                <tr v-if="filteredMembers.length === 0">
-                  <td colspan="10" class="py-8 px-4 text-center text-gray-400">
-                    {{ errorMessage || 'Tidak ada data member' }}
+                <tr v-if="filteredMembers.length === 0 && !loading">
+                  <td colspan="12" class="py-8 px-4 text-center text-gray-400">
+                    {{ searchQuery ? 'Tidak ada data member yang sesuai dengan pencarian' : 'Tidak ada data member' }}
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalCount > 0" class="px-6 py-4 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <!-- Info & Items Per Page -->
+              <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="text-sm text-gray-700">
+                  Menampilkan <span class="font-semibold">{{ offset + 1 }}</span> - 
+                  <span class="font-semibold">{{ Math.min(offset + limit, totalCount) }}</span> dari 
+                  <span class="font-semibold">{{ totalCount }}</span> member
+                </div>
+                <div class="flex items-center gap-2">
+                  <label class="text-sm text-gray-700">Items per page:</label>
+                  <select
+                    v-model="limit"
+                    @change="handleLimitChange"
+                    class="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option :value="10">10</option>
+                    <option :value="25">25</option>
+                    <option :value="50">50</option>
+                    <option :value="100">100</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Page Navigation -->
+              <div class="flex items-center gap-2">
+                <button
+                  @click="goToFirstPage"
+                  :disabled="currentPage === 1"
+                  :class="[
+                    'px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium transition',
+                    currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ]"
+                  title="First Page"
+                >
+                  ««
+                </button>
+                <button
+                  @click="previousPage"
+                  :disabled="currentPage === 1"
+                  :class="[
+                    'px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition',
+                    currentPage === 1
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ]"
+                >
+                  Previous
+                </button>
+                
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                  <template v-for="page in visiblePages" :key="page">
+                    <button
+                      v-if="typeof page === 'number'"
+                      @click="goToPage(page)"
+                      :class="[
+                        'px-3 py-2 border rounded-lg text-sm font-medium transition min-w-[40px]',
+                        page === currentPage
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      ]"
+                    >
+                      {{ page }}
+                    </button>
+                    <span
+                      v-else
+                      class="px-2 py-2 text-gray-500"
+                    >
+                      {{ page }}
+                    </span>
+                  </template>
+                </div>
+
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  :class="[
+                    'px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium transition',
+                    currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ]"
+                >
+                  Next
+                </button>
+                <button
+                  @click="goToLastPage"
+                  :disabled="currentPage === totalPages"
+                  :class="[
+                    'px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium transition',
+                    currentPage === totalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ]"
+                  title="Last Page"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -520,6 +656,9 @@ const isMobileMenuOpen = ref(false)
 const searchQuery = ref('')
 const loading = ref(true)
 const members = ref([])
+const totalCount = ref(0)
+const limit = ref(50)
+const offset = ref(0)
 const errorMessage = ref('')
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
@@ -555,14 +694,43 @@ const fetchMembers = async () => {
   errorMessage.value = ''
   
   try {
-    const response = await $fetch('/api/admin/members')
+    const params = {
+      limit: limit.value,
+      offset: offset.value
+    }
+    
+    const response = await $fetch('/api/admin/members', { params })
+    console.log('🔵 Members API Response:', response)
+    
     if (response.success) {
       members.value = response.data || []
+      totalCount.value = response.count || 0
+      console.log('🔵 Members loaded:', members.value.length, 'of', totalCount.value)
+      
+      // Debug: Check all members' deposit stats
+      members.value.forEach((member, index) => {
+        console.log(`🔵 Member ${index + 1}:`, {
+          id: member.id,
+          email: member.email,
+          total_balance: member.total_balance,
+          total_coin_from_deposits: member.total_coin_from_deposits,
+          coin_balance: member.coin_balance,
+          total_coin: member.total_coin
+        })
+      })
+      
+      // Check if any member has deposits
+      const membersWithDeposits = members.value.filter(m => m.total_balance > 0 || m.total_coin_from_deposits > 0)
+      if (membersWithDeposits.length > 0) {
+        console.log('✅ Found members with deposits:', membersWithDeposits.length)
+      } else {
+        console.log('⚠️ No members have deposits (total_balance or total_coin_from_deposits)')
+      }
     } else {
       errorMessage.value = response.message || 'Gagal memuat data member'
     }
   } catch (error) {
-    console.error('Error fetching members:', error)
+    console.error('❌ Error fetching members:', error)
     errorMessage.value = error?.data?.message || error?.message || 'Gagal memuat data member'
     members.value = []
   } finally {
@@ -570,7 +738,7 @@ const fetchMembers = async () => {
   }
 }
 
-// Filter members
+// Filter members (client-side filtering after pagination)
 const filteredMembers = computed(() => {
   if (!searchQuery.value) return members.value
   const query = searchQuery.value.toLowerCase()
@@ -580,6 +748,93 @@ const filteredMembers = computed(() => {
     member.referral_code?.toLowerCase().includes(query)
   )
 })
+
+// Pagination - Computed properties
+const currentPage = computed(() => {
+  return Math.floor(offset.value / limit.value) + 1
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(totalCount.value / limit.value)
+})
+
+const visiblePages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  
+  if (total <= 7) {
+    // Show all pages if total pages <= 7
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Show pages with ellipsis
+    if (current <= 3) {
+      // Show first 5 pages
+      for (let i = 1; i <= 5; i++) {
+        pages.push(i)
+      }
+      pages.push('...')
+      pages.push(total)
+    } else if (current >= total - 2) {
+      // Show last 5 pages
+      pages.push(1)
+      pages.push('...')
+      for (let i = total - 4; i <= total; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show current page with neighbors
+      pages.push(1)
+      pages.push('...')
+      for (let i = current - 1; i <= current + 1; i++) {
+        pages.push(i)
+      }
+      pages.push('...')
+      pages.push(total)
+    }
+  }
+  
+  return pages
+})
+
+// Pagination functions
+const goToPage = (page) => {
+  if (typeof page === 'number' && page >= 1 && page <= totalPages.value) {
+    offset.value = (page - 1) * limit.value
+    fetchMembers()
+  }
+}
+
+const goToFirstPage = () => {
+  offset.value = 0
+  fetchMembers()
+}
+
+const goToLastPage = () => {
+  offset.value = (totalPages.value - 1) * limit.value
+  fetchMembers()
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    offset.value += limit.value
+    fetchMembers()
+  }
+}
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    offset.value = Math.max(0, offset.value - limit.value)
+    fetchMembers()
+  }
+}
+
+const handleLimitChange = () => {
+  offset.value = 0
+  fetchMembers()
+}
 
 // Format date
 const formatDate = (dateString) => {
@@ -592,6 +847,28 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// Format number
+const formatNumber = (value) => {
+  if (!value || value === 0) return '0.00'
+  const numValue = typeof value === 'number' ? value : parseFloat(value)
+  if (isNaN(numValue)) return '0.00'
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8
+  }).format(numValue)
+}
+
+// Format currency
+const formatCurrency = (value) => {
+  if (!value || value === 0) return '0.00'
+  const numValue = typeof value === 'number' ? value : parseFloat(value)
+  if (isNaN(numValue)) return '0.00'
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 8
+  }).format(numValue)
 }
 
 // Referrals modal

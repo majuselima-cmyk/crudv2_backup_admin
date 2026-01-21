@@ -22,7 +22,6 @@
 const emit = defineEmits(['toggle-menu'])
 
 const handleToggle = () => {
-  console.log('Hamburger clicked in admin')
   emit('toggle-menu')
 }
 </script>

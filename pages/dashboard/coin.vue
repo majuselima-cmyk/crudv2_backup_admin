@@ -56,6 +56,23 @@
                   <p class="text-xs text-gray-500 mt-1">Nama token/coin yang akan digunakan</p>
                 </div>
 
+                <!-- Coin Code -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Kode Coin *
+                  </label>
+                  <input
+                    v-model="coinForm.coin_code"
+                    type="text"
+                    required
+                    maxlength="10"
+                    placeholder="Contoh: BTC, ETH, MYC"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 uppercase"
+                    @input="coinForm.coin_code = coinForm.coin_code.toUpperCase()"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Kode singkat untuk coin (maksimal 10 karakter, otomatis uppercase)</p>
+                </div>
+
                 <!-- Total Supply -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -94,7 +111,7 @@
                 </label>
                 <div class="flex items-center gap-3">
                   <input
-                    v-model.number="coinForm.price_per_coin_usdt"
+                    v-model.number="coinForm.normal_price_usdt"
                     type="number"
                     step="0.0001"
                     min="0"
@@ -105,7 +122,7 @@
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Price for normal members</p>
                 <p class="text-xs text-blue-600 mt-1 font-medium">
-                  1 Coin = {{ coinForm.price_per_coin_usdt }} USDT
+                  1 Coin = {{ coinForm.normal_price_usdt }} USDT
                 </p>
               </div>
 
@@ -142,7 +159,7 @@
                   <span class="text-gray-600 font-medium">USDT</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Special price for Leader members</p>
-                <p v-if="coinForm.leader_price_usdt && coinForm.price_per_coin_usdt" class="text-xs text-green-600 mt-1 font-medium">
+                <p v-if="coinForm.leader_price_usdt && coinForm.normal_price_usdt" class="text-xs text-green-600 mt-1 font-medium">
                   Discount: {{ calculateLeaderDiscount() }}% from normal price
                 </p>
               </div>
@@ -170,7 +187,7 @@
                 </label>
                 <div class="flex items-center gap-3">
                   <input
-                    v-model.number="coinForm.presale_price_usdt"
+                    v-model.number="coinForm.vip_price_usdt"
                     type="number"
                     step="0.0001"
                     min="0"
@@ -180,7 +197,7 @@
                   <span class="text-gray-600 font-medium">USDT</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Special price for VIP members</p>
-                <p v-if="coinForm.presale_price_usdt && coinForm.price_per_coin_usdt" class="text-xs text-green-600 mt-1 font-medium">
+                <p v-if="coinForm.vip_price_usdt && coinForm.normal_price_usdt" class="text-xs text-green-600 mt-1 font-medium">
                   Discount: {{ calculateDiscount() }}% from normal price
                 </p>
               </div>
@@ -221,26 +238,30 @@
           <!-- Summary Card -->
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Ringkasan</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div class="bg-white rounded-lg p-4 border border-gray-200">
                 <p class="text-xs text-gray-500 mb-1">Nama Coin</p>
                 <p class="text-lg font-bold text-gray-800">{{ coinForm.coin_name || '-' }}</p>
               </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <p class="text-xs text-gray-500 mb-1">Kode Coin</p>
+                <p class="text-lg font-bold text-gray-800">{{ coinForm.coin_code || '-' }}</p>
+              </div>
               <div class="bg-white rounded-lg p-4 border border-blue-200">
                 <p class="text-xs text-gray-500 mb-1">Normal Member Price</p>
-                <p class="text-lg font-bold text-blue-600">{{ coinForm.price_per_coin_usdt }} USDT</p>
+                <p class="text-lg font-bold text-blue-600">{{ coinForm.normal_price_usdt }} USDT</p>
               </div>
               <div class="bg-white rounded-lg p-4 border border-emerald-200">
                 <p class="text-xs text-gray-500 mb-1">Leader Member Price</p>
                 <p class="text-lg font-bold text-emerald-600">{{ coinForm.leader_price_usdt }} USDT</p>
-                <p v-if="coinForm.leader_price_usdt && coinForm.price_per_coin_usdt" class="text-xs text-green-600 mt-1">
+                <p v-if="coinForm.leader_price_usdt && coinForm.normal_price_usdt" class="text-xs text-green-600 mt-1">
                   {{ calculateLeaderDiscount() }}% discount
                 </p>
               </div>
               <div class="bg-white rounded-lg p-4 border border-purple-200">
                 <p class="text-xs text-gray-500 mb-1">VIP Member Price</p>
-                <p class="text-lg font-bold text-purple-600">{{ coinForm.presale_price_usdt }} USDT</p>
-                <p v-if="coinForm.presale_price_usdt && coinForm.price_per_coin_usdt" class="text-xs text-green-600 mt-1">
+                <p class="text-lg font-bold text-purple-600">{{ coinForm.vip_price_usdt }} USDT</p>
+                <p v-if="coinForm.vip_price_usdt && coinForm.normal_price_usdt" class="text-xs text-green-600 mt-1">
                   {{ calculateDiscount() }}% discount
                 </p>
               </div>
@@ -293,9 +314,10 @@ const successMessage = ref('')
 
 const coinForm = ref({
   coin_name: 'MyCoin',
+  coin_code: 'COIN',
   total_supply: 999999999.00,
-  price_per_coin_usdt: 0.5000,
-  presale_price_usdt: 0.4000, // Harga untuk member VIP
+  normal_price_usdt: 0.5000,
+  vip_price_usdt: 0.4000, // Harga untuk member VIP
   leader_price_usdt: 0.5000, // Harga untuk member Leader
   is_active: true
 })
@@ -315,9 +337,9 @@ const formatNumber = (num) => {
 
 // Calculate discount percentage for VIP
 const calculateDiscount = () => {
-  if (!coinForm.value.presale_price_usdt || !coinForm.value.price_per_coin_usdt) return 0
-  const normal = parseFloat(coinForm.value.price_per_coin_usdt)
-  const presale = parseFloat(coinForm.value.presale_price_usdt)
+  if (!coinForm.value.vip_price_usdt || !coinForm.value.normal_price_usdt) return 0
+  const normal = parseFloat(coinForm.value.normal_price_usdt)
+  const presale = parseFloat(coinForm.value.vip_price_usdt)
   if (presale >= normal) return 0
   const discount = ((normal - presale) / normal) * 100
   return discount.toFixed(2)
@@ -325,8 +347,8 @@ const calculateDiscount = () => {
 
 // Calculate discount percentage for Leader
 const calculateLeaderDiscount = () => {
-  if (!coinForm.value.leader_price_usdt || !coinForm.value.price_per_coin_usdt) return 0
-  const normal = parseFloat(coinForm.value.price_per_coin_usdt)
+  if (!coinForm.value.leader_price_usdt || !coinForm.value.normal_price_usdt) return 0
+  const normal = parseFloat(coinForm.value.normal_price_usdt)
   const leader = parseFloat(coinForm.value.leader_price_usdt)
   if (leader >= normal) return 0
   const discount = ((normal - leader) / normal) * 100
@@ -346,9 +368,10 @@ const fetchCoinSettings = async () => {
       // Update form with fetched data
       coinForm.value = {
         coin_name: response.data.coin_name || 'MyCoin',
+        coin_code: response.data.coin_code || 'COIN',
         total_supply: parseFloat(response.data.total_supply) || 999999999.00,
-        price_per_coin_usdt: parseFloat(response.data.price_per_coin_usdt) || 0.5000,
-        presale_price_usdt: response.data.presale_price_usdt ? parseFloat(response.data.presale_price_usdt) : 0.4000,
+        normal_price_usdt: parseFloat(response.data.normal_price_usdt) || 0.5000,
+        vip_price_usdt: response.data.vip_price_usdt ? parseFloat(response.data.vip_price_usdt) : 0.4000,
         leader_price_usdt: response.data.leader_price_usdt ? parseFloat(response.data.leader_price_usdt) : 0.5000,
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
       }
@@ -372,9 +395,10 @@ const handleSubmit = async () => {
       method: 'PUT',
       body: {
         coin_name: coinForm.value.coin_name,
+        coin_code: coinForm.value.coin_code,
         total_supply: coinForm.value.total_supply,
-        price_per_coin_usdt: coinForm.value.price_per_coin_usdt,
-        presale_price_usdt: coinForm.value.presale_price_usdt,
+        normal_price_usdt: coinForm.value.normal_price_usdt,
+        vip_price_usdt: coinForm.value.vip_price_usdt,
         leader_price_usdt: coinForm.value.leader_price_usdt,
         is_active: coinForm.value.is_active
       }
@@ -401,9 +425,10 @@ const handleSubmit = async () => {
 const resetForm = () => {
   coinForm.value = {
     coin_name: 'MyCoin',
+    coin_code: 'COIN',
     total_supply: 999999999.00,
-    price_per_coin_usdt: 0.5000,
-    presale_price_usdt: 0.4000,
+    normal_price_usdt: 0.5000,
+    vip_price_usdt: 0.4000,
     leader_price_usdt: 0.5000,
     is_active: true
   }

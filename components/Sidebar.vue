@@ -101,13 +101,8 @@ const menuItems = computed(() => [
     icon: 'home'
   },
   {
-    path: '/dashboard/data',
-    label: 'Manajemen Data',
-    icon: 'search'
-  },
-  {
     path: '/dashboard/members',
-    label: 'Konten Member',
+    label: 'Member',
     icon: 'user'
   },
   {
@@ -136,6 +131,11 @@ const menuItems = computed(() => [
     icon: 'settings'
   },
   {
+    path: '/dashboard/deposits',
+    label: 'Rekap Deposit',
+    icon: 'document'
+  },
+  {
     path: '/dashboard/settings',
     label: 'Pengaturan',
     icon: 'settings'
@@ -157,16 +157,28 @@ const handleLogout = () => {
 }
 
 const checkMobile = () => {
-  isMobile.value = window.innerWidth < 1024 // lg breakpoint
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 1024 // lg breakpoint
+  }
 }
 
+// Store cleanup function reference
+let resizeHandler = null
+
+// Register lifecycle hooks synchronously in setup
 onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+  if (typeof window !== 'undefined') {
+    checkMobile()
+    resizeHandler = checkMobile
+    window.addEventListener('resize', resizeHandler)
+  }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined' && resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
 })
 </script>
 

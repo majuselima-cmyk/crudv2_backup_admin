@@ -9,11 +9,10 @@ CREATE TABLE IF NOT EXISTS public.coin_settings (
   coin_name TEXT NOT NULL DEFAULT 'MyCoin',
   total_supply DECIMAL(20,2) NOT NULL DEFAULT 999999999.00,
   
-  -- Pricing
-  price_per_coin_usdt DECIMAL(10,4) NOT NULL DEFAULT 0.5000,
-  
-  -- VIP Price (Presale untuk member VIP)
-  presale_price_usdt DECIMAL(10,4) NOT NULL DEFAULT 0.4000,
+  -- Pricing berdasarkan jenis member
+  price_per_coin_usdt DECIMAL(10,4) NOT NULL DEFAULT 0.5000, -- Normal member price
+  leader_price_usdt DECIMAL(10,4) NOT NULL DEFAULT 0.5000, -- Leader member price
+  presale_price_usdt DECIMAL(10,4) NOT NULL DEFAULT 0.4000, -- VIP member price
   
   -- Status
   is_active BOOLEAN NOT NULL DEFAULT true,
@@ -28,13 +27,15 @@ INSERT INTO public.coin_settings (
   coin_name,
   total_supply,
   price_per_coin_usdt,
+  leader_price_usdt,
   presale_price_usdt,
   is_active
 ) VALUES (
   'MyCoin',           -- coin name
   999999999.00,       -- total supply
-  0.5000,            -- price per coin untuk member biasa (USDT)
-  0.4000,            -- price per coin untuk member VIP (USDT)
+  0.5000,            -- price per coin untuk normal member (USDT)
+  0.5000,            -- price per coin untuk leader member (USDT)
+  0.4000,            -- price per coin untuk VIP member (USDT)
   true                -- active
 ) ON CONFLICT DO NOTHING;
 

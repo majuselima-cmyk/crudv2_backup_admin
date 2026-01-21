@@ -45,9 +45,10 @@ export default defineEventHandler(async (event) => {
         success: true,
         data: {
           coin_name: 'MyCoin',
+          coin_code: 'COIN',
           total_supply: 999999999.00,
-          price_per_coin_usdt: 0.5000,
-          presale_price_usdt: 0.4000,
+          normal_price_usdt: 0.5000,
+          vip_price_usdt: 0.4000,
           leader_price_usdt: 0.5000,
           is_active: true
         }

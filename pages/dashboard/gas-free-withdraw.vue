@@ -62,6 +62,25 @@
                 </p>
               </div>
 
+              <!-- Minimal Withdraw -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Minimal Withdraw (USDT)
+                </label>
+                <div class="flex items-center gap-3">
+                  <input
+                    v-model.number="gasFreeForm.minimal_withdraw"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <span class="text-gray-600 font-medium">USDT</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Minimal jumlah withdraw yang diperbolehkan (default: 10 USDT)</p>
+              </div>
+
               <!-- Info Card -->
               <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p class="text-xs text-green-700 font-medium mb-1">Info Gas Free Withdraw</p>
@@ -99,10 +118,14 @@
           <!-- Summary Card -->
           <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Summary</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="bg-white rounded-lg p-4 border border-gray-200">
                 <p class="text-xs text-gray-500 mb-1">Gas Free Percentage</p>
                 <p class="text-lg font-bold text-green-600">{{ gasFreeForm.gas_free_percentage }}%</p>
+              </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <p class="text-xs text-gray-500 mb-1">Minimal Withdraw</p>
+                <p class="text-lg font-bold text-blue-600">{{ gasFreeForm.minimal_withdraw }} USDT</p>
               </div>
               <div class="bg-white rounded-lg p-4 border border-gray-200">
                 <p class="text-xs text-gray-500 mb-1">Status</p>
@@ -159,6 +182,7 @@ const successMessage = ref('')
 
 const gasFreeForm = ref({
   gas_free_percentage: 3.00,
+  minimal_withdraw: 10,
   is_active: true
 })
 
@@ -178,6 +202,7 @@ const fetchSettings = async () => {
       // Update form with fetched data
       gasFreeForm.value = {
         gas_free_percentage: parseFloat(response.data.gas_free_percentage) || 3.00,
+        minimal_withdraw: parseFloat(response.data.minimal_withdraw) || 10,
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
       }
     }
@@ -200,6 +225,7 @@ const handleSubmit = async () => {
       method: 'PUT',
       body: {
         gas_free_percentage: gasFreeForm.value.gas_free_percentage,
+        minimal_withdraw: gasFreeForm.value.minimal_withdraw,
         is_active: gasFreeForm.value.is_active
       }
     })
@@ -225,6 +251,7 @@ const handleSubmit = async () => {
 const resetForm = () => {
   gasFreeForm.value = {
     gas_free_percentage: 3.00,
+    minimal_withdraw: 10,
     is_active: true
   }
   submitError.value = ''

@@ -45,6 +45,7 @@ export default defineEventHandler(async (event) => {
         success: true,
         data: {
           gas_free_percentage: 3.00,
+          minimal_withdraw: 10,
           is_active: true
         }
       }

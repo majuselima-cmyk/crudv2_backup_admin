@@ -8,13 +8,13 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { gas_free_percentage, is_active } = body
+    const { gas_free_percentage, minimal_withdraw, is_active } = body
 
     // Validate required fields
-    if (gas_free_percentage === undefined || is_active === undefined) {
+    if (gas_free_percentage === undefined || minimal_withdraw === undefined || is_active === undefined) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Gas free percentage dan status wajib diisi'
+        statusMessage: 'Gas free percentage, minimal withdraw, dan status wajib diisi'
       })
     }
 
@@ -24,6 +24,15 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: 'Gas free percentage harus antara 0 dan 100'
+      })
+    }
+
+    // Validate minimal withdraw (must be >= 0)
+    const minimal = parseFloat(minimal_withdraw)
+    if (isNaN(minimal) || minimal < 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Minimal withdraw harus lebih besar atau sama dengan 0'
       })
     }
 
@@ -56,6 +65,7 @@ export default defineEventHandler(async (event) => {
 
     const updateData: any = {
       gas_free_percentage: percentage,
+      minimal_withdraw: minimal,
       is_active: Boolean(is_active)
     }
 

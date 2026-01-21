@@ -1,7 +1,7 @@
 /**
  * Update coin settings
  * PUT /api/admin/coin
- * Body: { coin_name, total_supply, price_per_coin_usdt, presale_enabled, presale_price_usdt, presale_min_purchase, presale_max_purchase, presale_start_date, presale_end_date, is_active }
+ * Body: { coin_name, total_supply, normal_price_usdt, vip_price_usdt, leader_price_usdt, is_active }
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -10,18 +10,27 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const {
       coin_name,
+      coin_code,
       total_supply,
-      price_per_coin_usdt,
-      presale_price_usdt,
+      normal_price_usdt,
+      vip_price_usdt,
       leader_price_usdt,
       is_active
     } = body
 
     // Validate required fields
-    if (!coin_name || total_supply === undefined || price_per_coin_usdt === undefined || presale_price_usdt === undefined || leader_price_usdt === undefined || is_active === undefined) {
+    if (!coin_name || !coin_code || total_supply === undefined || normal_price_usdt === undefined || vip_price_usdt === undefined || leader_price_usdt === undefined || is_active === undefined) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Semua field wajib diisi'
+      })
+    }
+
+    // Validate coin_code (max 10 characters, uppercase)
+    if (coin_code.length > 10) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Kode coin maksimal 10 karakter'
       })
     }
 
@@ -33,14 +42,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (parseFloat(price_per_coin_usdt) < 0) {
+    if (parseFloat(normal_price_usdt) < 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Harga per coin tidak boleh negatif'
+        statusMessage: 'Harga Normal tidak boleh negatif'
       })
     }
 
-    if (parseFloat(presale_price_usdt) < 0) {
+    if (parseFloat(vip_price_usdt) < 0) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Harga VIP tidak boleh negatif'
@@ -83,9 +92,10 @@ export default defineEventHandler(async (event) => {
 
     const updateData: any = {
       coin_name: coin_name.trim(),
+      coin_code: coin_code.trim().toUpperCase(),
       total_supply: parseFloat(total_supply),
-      price_per_coin_usdt: parseFloat(price_per_coin_usdt),
-      presale_price_usdt: parseFloat(presale_price_usdt),
+      normal_price_usdt: parseFloat(normal_price_usdt),
+      vip_price_usdt: parseFloat(vip_price_usdt),
       leader_price_usdt: parseFloat(leader_price_usdt),
       is_active: Boolean(is_active)
     }
