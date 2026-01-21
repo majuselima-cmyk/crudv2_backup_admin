@@ -15,6 +15,9 @@ export default defineEventHandler(async (event) => {
       normal_price_usdt,
       vip_price_usdt,
       leader_price_usdt,
+      chart_min_price,
+      chart_mid_price,
+      chart_max_price,
       logo_url,
       favicon_url,
       website_name,
@@ -23,10 +26,25 @@ export default defineEventHandler(async (event) => {
     } = body
 
     // Validate required fields
-    if (!coin_name || !coin_code || total_supply === undefined || normal_price_usdt === undefined || vip_price_usdt === undefined || leader_price_usdt === undefined || !website_name || !website_title || is_active === undefined) {
+    if (!coin_name || !coin_code || total_supply === undefined || normal_price_usdt === undefined || vip_price_usdt === undefined || leader_price_usdt === undefined || chart_min_price === undefined || chart_mid_price === undefined || chart_max_price === undefined || !website_name || !website_title || is_active === undefined) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Semua field wajib diisi'
+      })
+    }
+
+    // Validate chart price range
+    if (parseFloat(chart_min_price) >= parseFloat(chart_mid_price)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Harga terendah harus lebih kecil dari harga tengah'
+      })
+    }
+
+    if (parseFloat(chart_mid_price) >= parseFloat(chart_max_price)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Harga tengah harus lebih kecil dari harga tertinggi'
       })
     }
 
@@ -67,6 +85,27 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    if (parseFloat(chart_min_price) < 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Harga chart minimum tidak boleh negatif'
+      })
+    }
+
+    if (parseFloat(chart_mid_price) < 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Harga chart tengah tidak boleh negatif'
+      })
+    }
+
+    if (parseFloat(chart_max_price) < 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Harga chart maksimum tidak boleh negatif'
+      })
+    }
+
     const config = useRuntimeConfig()
     const supabaseUrl = config.public?.supabaseUrl || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
     const supabaseServiceKey = config.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -101,6 +140,9 @@ export default defineEventHandler(async (event) => {
       normal_price_usdt: parseFloat(normal_price_usdt),
       vip_price_usdt: parseFloat(vip_price_usdt),
       leader_price_usdt: parseFloat(leader_price_usdt),
+      chart_min_price: parseFloat(chart_min_price),
+      chart_mid_price: parseFloat(chart_mid_price),
+      chart_max_price: parseFloat(chart_max_price),
       logo_url: logo_url && logo_url.trim() ? logo_url.trim() : null,
       favicon_url: favicon_url && favicon_url.trim() ? favicon_url.trim() : null,
       website_name: website_name.trim(),

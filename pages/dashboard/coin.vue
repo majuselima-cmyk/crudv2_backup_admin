@@ -276,6 +276,97 @@
             </div>
           </div>
 
+          <!-- Chart Price Range Section -->
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            <div class="bg-gradient-to-r from-cyan-500 to-blue-500 p-4">
+              <h2 class="text-xl font-semibold text-white">Chart Price Range Settings</h2>
+              <p class="text-sm text-cyan-100 mt-1">Pengaturan range harga untuk chart (min, tengah, max)</p>
+            </div>
+            
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Chart Min Price -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Harga Terendah (Min) *
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="coinForm.chart_min_price"
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-200"
+                    />
+                    <span class="text-gray-600 font-medium">USDT</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Harga terendah yang akan ditampilkan di chart</p>
+                </div>
+
+                <!-- Chart Mid Price -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Harga Tengah (Mid) *
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="coinForm.chart_mid_price"
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-200"
+                    />
+                    <span class="text-gray-600 font-medium">USDT</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Harga tengah (mean reversion point) untuk chart</p>
+                </div>
+
+                <!-- Chart Max Price -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Harga Tertinggi (Max) *
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="coinForm.chart_max_price"
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-200"
+                    />
+                    <span class="text-gray-600 font-medium">USDT</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Harga tertinggi yang akan ditampilkan di chart</p>
+                </div>
+              </div>
+
+              <!-- Validation Info -->
+              <div class="mt-4 bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+                <p class="text-xs text-cyan-700 font-medium mb-2">Info Validasi:</p>
+                <ul class="text-xs text-cyan-600 space-y-1">
+                  <li>• Min harus lebih kecil dari Mid</li>
+                  <li>• Mid harus lebih kecil dari Max</li>
+                  <li>• Range ini akan digunakan untuk generate pergerakan harga chart yang natural</li>
+                </ul>
+              </div>
+
+              <!-- Preview Range -->
+              <div class="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p class="text-xs text-gray-600 font-medium mb-2">Preview Range:</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold text-red-600">{{ coinForm.chart_min_price || 0.4 }} USDT</span>
+                  <span class="text-gray-400">→</span>
+                  <span class="text-sm font-semibold text-blue-600">{{ coinForm.chart_mid_price || 0.5 }} USDT</span>
+                  <span class="text-gray-400">→</span>
+                  <span class="text-sm font-semibold text-green-600">{{ coinForm.chart_max_price || 0.6 }} USDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Status Toggle -->
           <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
             <div class="flex items-center justify-between">
@@ -383,6 +474,9 @@ const coinForm = ref({
   normal_price_usdt: 0.5000,
   vip_price_usdt: 0.4000, // Harga untuk member VIP
   leader_price_usdt: 0.5000, // Harga untuk member Leader
+  chart_min_price: 0.4, // Harga terendah untuk chart
+  chart_mid_price: 0.5, // Harga tengah untuk chart
+  chart_max_price: 0.6, // Harga tertinggi untuk chart
   logo_url: '',
   favicon_url: '',
   website_name: 'localhost:3000',
@@ -441,6 +535,9 @@ const fetchCoinSettings = async () => {
         normal_price_usdt: parseFloat(response.data.normal_price_usdt) || 0.5000,
         vip_price_usdt: response.data.vip_price_usdt ? parseFloat(response.data.vip_price_usdt) : 0.4000,
         leader_price_usdt: response.data.leader_price_usdt ? parseFloat(response.data.leader_price_usdt) : 0.5000,
+        chart_min_price: response.data.chart_min_price ? parseFloat(response.data.chart_min_price) : 0.4,
+        chart_mid_price: response.data.chart_mid_price ? parseFloat(response.data.chart_mid_price) : 0.5,
+        chart_max_price: response.data.chart_max_price ? parseFloat(response.data.chart_max_price) : 0.6,
         logo_url: response.data.logo_url || '',
         favicon_url: response.data.favicon_url || '',
         website_name: response.data.website_name || 'localhost:3000',
@@ -463,6 +560,18 @@ const handleSubmit = async () => {
   successMessage.value = ''
 
   try {
+    // Validate chart price range
+    if (coinForm.value.chart_min_price >= coinForm.value.chart_mid_price) {
+      submitError.value = 'Harga terendah harus lebih kecil dari harga tengah'
+      isSubmitting.value = false
+      return
+    }
+    if (coinForm.value.chart_mid_price >= coinForm.value.chart_max_price) {
+      submitError.value = 'Harga tengah harus lebih kecil dari harga tertinggi'
+      isSubmitting.value = false
+      return
+    }
+
     const response = await $fetch('/api/admin/coin', {
       method: 'PUT',
       body: {
@@ -472,6 +581,9 @@ const handleSubmit = async () => {
         normal_price_usdt: coinForm.value.normal_price_usdt,
         vip_price_usdt: coinForm.value.vip_price_usdt,
         leader_price_usdt: coinForm.value.leader_price_usdt,
+        chart_min_price: coinForm.value.chart_min_price,
+        chart_mid_price: coinForm.value.chart_mid_price,
+        chart_max_price: coinForm.value.chart_max_price,
         logo_url: coinForm.value.logo_url || null,
         favicon_url: coinForm.value.favicon_url || null,
         website_name: coinForm.value.website_name || 'localhost:3000',
@@ -506,6 +618,13 @@ const resetForm = () => {
     normal_price_usdt: 0.5000,
     vip_price_usdt: 0.4000,
     leader_price_usdt: 0.5000,
+    chart_min_price: 0.4,
+    chart_mid_price: 0.5,
+    chart_max_price: 0.6,
+    logo_url: '',
+    favicon_url: '',
+    website_name: 'localhost:3000',
+    website_title: 'CRUD App',
     is_active: true
   }
   submitError.value = ''
