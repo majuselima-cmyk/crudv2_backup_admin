@@ -15,11 +15,15 @@ export default defineEventHandler(async (event) => {
       normal_price_usdt,
       vip_price_usdt,
       leader_price_usdt,
+      logo_url,
+      favicon_url,
+      website_name,
+      website_title,
       is_active
     } = body
 
     // Validate required fields
-    if (!coin_name || !coin_code || total_supply === undefined || normal_price_usdt === undefined || vip_price_usdt === undefined || leader_price_usdt === undefined || is_active === undefined) {
+    if (!coin_name || !coin_code || total_supply === undefined || normal_price_usdt === undefined || vip_price_usdt === undefined || leader_price_usdt === undefined || !website_name || !website_title || is_active === undefined) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Semua field wajib diisi'
@@ -97,6 +101,10 @@ export default defineEventHandler(async (event) => {
       normal_price_usdt: parseFloat(normal_price_usdt),
       vip_price_usdt: parseFloat(vip_price_usdt),
       leader_price_usdt: parseFloat(leader_price_usdt),
+      logo_url: logo_url && logo_url.trim() ? logo_url.trim() : null,
+      favicon_url: favicon_url && favicon_url.trim() ? favicon_url.trim() : null,
+      website_name: website_name.trim(),
+      website_title: website_title.trim(),
       is_active: Boolean(is_active)
     }
 

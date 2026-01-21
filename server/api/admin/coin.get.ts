@@ -50,6 +50,10 @@ export default defineEventHandler(async (event) => {
           normal_price_usdt: 0.5000,
           vip_price_usdt: 0.4000,
           leader_price_usdt: 0.5000,
+          logo_url: null,
+          favicon_url: null,
+          website_name: 'localhost:3000',
+          website_title: 'CRUD App',
           is_active: true
         }
       }

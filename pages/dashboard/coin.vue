@@ -94,6 +94,70 @@
                     {{ formatNumber(coinForm.total_supply) }} coins
                   </p>
                 </div>
+
+                <!-- Logo URL -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Logo URL
+                  </label>
+                  <input
+                    v-model="coinForm.logo_url"
+                    type="url"
+                    placeholder="https://example.com/logo.png"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">URL logo untuk ditampilkan di sidebar dan header</p>
+                  <div v-if="coinForm.logo_url" class="mt-2">
+                    <img :src="coinForm.logo_url" alt="Logo Preview" class="h-8 object-contain" onerror="this.style.display='none'" />
+                  </div>
+                </div>
+
+                <!-- Favicon URL -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Favicon URL
+                  </label>
+                  <input
+                    v-model="coinForm.favicon_url"
+                    type="url"
+                    placeholder="https://example.com/favicon.ico"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">URL favicon untuk browser tab</p>
+                  <div v-if="coinForm.favicon_url" class="mt-2">
+                    <img :src="coinForm.favicon_url" alt="Favicon Preview" class="h-6 w-6 object-contain" onerror="this.style.display='none'" />
+                  </div>
+                </div>
+
+                <!-- Website Name -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Nama Website *
+                  </label>
+                  <input
+                    v-model="coinForm.website_name"
+                    type="text"
+                    required
+                    placeholder="localhost:3000"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Nama website/domain (contoh: localhost:3000, example.com)</p>
+                </div>
+
+                <!-- Website Title -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Title Website *
+                  </label>
+                  <input
+                    v-model="coinForm.website_title"
+                    type="text"
+                    required
+                    placeholder="CRUD App"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Title yang akan ditampilkan di browser tab</p>
+                </div>
               </div>
             </div>
 
@@ -319,6 +383,10 @@ const coinForm = ref({
   normal_price_usdt: 0.5000,
   vip_price_usdt: 0.4000, // Harga untuk member VIP
   leader_price_usdt: 0.5000, // Harga untuk member Leader
+  logo_url: '',
+  favicon_url: '',
+  website_name: 'localhost:3000',
+  website_title: 'CRUD App',
   is_active: true
 })
 
@@ -373,6 +441,10 @@ const fetchCoinSettings = async () => {
         normal_price_usdt: parseFloat(response.data.normal_price_usdt) || 0.5000,
         vip_price_usdt: response.data.vip_price_usdt ? parseFloat(response.data.vip_price_usdt) : 0.4000,
         leader_price_usdt: response.data.leader_price_usdt ? parseFloat(response.data.leader_price_usdt) : 0.5000,
+        logo_url: response.data.logo_url || '',
+        favicon_url: response.data.favicon_url || '',
+        website_name: response.data.website_name || 'localhost:3000',
+        website_title: response.data.website_title || 'CRUD App',
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
       }
     }
@@ -400,6 +472,10 @@ const handleSubmit = async () => {
         normal_price_usdt: coinForm.value.normal_price_usdt,
         vip_price_usdt: coinForm.value.vip_price_usdt,
         leader_price_usdt: coinForm.value.leader_price_usdt,
+        logo_url: coinForm.value.logo_url || null,
+        favicon_url: coinForm.value.favicon_url || null,
+        website_name: coinForm.value.website_name || 'localhost:3000',
+        website_title: coinForm.value.website_title || 'CRUD App',
         is_active: coinForm.value.is_active
       }
     })
