@@ -59,6 +59,54 @@
                     <span class="text-gray-600 font-medium">%</span>
                   </div>
                   <p class="text-xs text-gray-500 mt-1">Bonus untuk setiap referral yang berhasil</p>
+                  
+                  <!-- Split Ratio -->
+                  <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <label class="block text-xs font-semibold text-blue-700 mb-3">
+                      Pembagian Bonus Referral
+                    </label>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                          Ke Balance USDT (%)
+                        </label>
+                        <div class="flex items-center gap-2">
+                          <input
+                            v-model.number="bonusForm.referral_balance_percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            required
+                            @input="updateCoinPercentage"
+                            class="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 text-sm"
+                          />
+                          <span class="text-gray-600 font-medium text-sm">%</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                          Ke Coin (%)
+                        </label>
+                        <div class="flex items-center gap-2">
+                          <input
+                            v-model.number="bonusForm.referral_coin_percentage"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            required
+                            @input="updateBalancePercentage"
+                            class="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 text-sm"
+                          />
+                          <span class="text-gray-600 font-medium text-sm">%</span>
+                        </div>
+                      </div>
+                      <div class="text-xs text-gray-600 mt-2">
+                        Total: <span :class="getSplitTotalClass()">{{ (bonusForm.referral_balance_percentage + bonusForm.referral_coin_percentage).toFixed(2) }}%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Matching Bonus -->
@@ -301,6 +349,8 @@ const successMessage = ref('')
 
 const bonusForm = ref({
   referral_percentage: 15.00,
+  referral_balance_percentage: 80.00,
+  referral_coin_percentage: 20.00,
   matching_level1_percentage: 10.00,
   matching_level2_percentage: 5.00,
   matching_level3_percentage: 2.00,
@@ -328,6 +378,8 @@ const fetchBonusSettings = async () => {
       // Update form with fetched data
       bonusForm.value = {
         referral_percentage: parseFloat(response.data.referral_percentage) || 15.00,
+        referral_balance_percentage: parseFloat(response.data.referral_balance_percentage) || 80.00,
+        referral_coin_percentage: parseFloat(response.data.referral_coin_percentage) || 20.00,
         matching_level1_percentage: parseFloat(response.data.matching_level1_percentage) || 10.00,
         matching_level2_percentage: parseFloat(response.data.matching_level2_percentage) || 5.00,
         matching_level3_percentage: parseFloat(response.data.matching_level3_percentage) || 2.00,
@@ -358,6 +410,8 @@ const handleSubmit = async () => {
       method: 'PUT',
       body: {
         referral_percentage: bonusForm.value.referral_percentage,
+        referral_balance_percentage: bonusForm.value.referral_balance_percentage,
+        referral_coin_percentage: bonusForm.value.referral_coin_percentage,
         matching_level1_percentage: bonusForm.value.matching_level1_percentage,
         matching_level2_percentage: bonusForm.value.matching_level2_percentage,
         matching_level3_percentage: bonusForm.value.matching_level3_percentage,
@@ -387,10 +441,31 @@ const handleSubmit = async () => {
   }
 }
 
+// Update coin percentage when balance percentage changes
+const updateCoinPercentage = () => {
+  bonusForm.value.referral_coin_percentage = 100 - bonusForm.value.referral_balance_percentage
+}
+
+// Update balance percentage when coin percentage changes
+const updateBalancePercentage = () => {
+  bonusForm.value.referral_balance_percentage = 100 - bonusForm.value.referral_coin_percentage
+}
+
+// Get class for split total (red if not 100%, green if 100%)
+const getSplitTotalClass = () => {
+  const total = bonusForm.value.referral_balance_percentage + bonusForm.value.referral_coin_percentage
+  if (Math.abs(total - 100) < 0.01) {
+    return 'text-green-600 font-semibold'
+  }
+  return 'text-red-600 font-semibold'
+}
+
 // Reset form to default values
 const resetForm = () => {
   bonusForm.value = {
     referral_percentage: 15.00,
+    referral_balance_percentage: 80.00,
+    referral_coin_percentage: 20.00,
     matching_level1_percentage: 10.00,
     matching_level2_percentage: 5.00,
     matching_level3_percentage: 2.00,

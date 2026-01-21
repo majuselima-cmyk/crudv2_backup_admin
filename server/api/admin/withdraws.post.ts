@@ -1,34 +1,32 @@
 /**
- * Update withdraw by ID
- * PUT /api/admin/withdraws/:id
+ * Create new withdraw
+ * POST /api/admin/withdraws
  */
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   try {
-    const id = getRouterParam(event, 'id')
-    
-    if (!id) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Withdraw ID is required'
-      })
-    }
-
     const body = await readBody(event)
     const {
+      member_id,
       withdraw_type,
       amount,
       wallet_address,
       wallet_network,
       wallet_model,
       admin_wallet_address,
-      hash,
       notes,
       status
     } = body
 
     // Validation
+    if (!member_id) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Member ID is required'
+      })
+    }
+
     if (!withdraw_type || !['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
       throw createError({
         statusCode: 400,
@@ -82,82 +80,79 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Check if withdraw exists
-    const { data: existingWithdraw, error: checkError } = await supabase
-      .from('withdraws')
+    // Check if member exists
+    const { data: member, error: memberError } = await supabase
+      .from('members')
       .select('id')
-      .eq('id', id)
+      .eq('id', member_id)
       .single()
 
-    if (checkError || !existingWithdraw) {
+    if (memberError || !member) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Withdraw not found'
+        statusMessage: 'Member not found'
       })
     }
 
-    // Build update object
-    const updateData: any = {
+    // Create withdraw - build insert object
+    const insertData: any = {
+      member_id,
       withdraw_type,
       amount: parseFloat(amount),
       wallet_address,
       wallet_network,
       wallet_model: wallet_model || null,
-      hash: hash || null,
       notes: notes || null,
       status
     }
-
-    // Only add admin_wallet_address if provided
-    if (admin_wallet_address !== undefined && admin_wallet_address !== null && admin_wallet_address !== '') {
-      updateData.admin_wallet_address = admin_wallet_address
+    
+    // Only add admin_wallet_address if provided and field exists in database
+    if (admin_wallet_address) {
+      insertData.admin_wallet_address = admin_wallet_address
     }
 
-    // Update withdraw
-    const { data: updatedWithdraw, error: updateError } = await supabase
+    // Create withdraw
+    const { data: newWithdraw, error: createError } = await supabase
       .from('withdraws')
-      .update(updateData)
-      .eq('id', id)
+      .insert(insertData)
       .select()
       .single()
 
-    if (updateError) {
-      console.error('Error updating withdraw:', updateError)
-      
+    if (createError) {
+      console.error('Error creating withdraw:', createError)
       // If error is about unknown column, try without admin_wallet_address
-      if (updateError.message?.includes('admin_wallet_address') || updateError.code === '42703') {
-        delete updateData.admin_wallet_address
+      if (createError.message?.includes('admin_wallet_address') || createError.code === '42703') {
+        delete insertData.admin_wallet_address
         const { data: retryWithdraw, error: retryError } = await supabase
           .from('withdraws')
-          .update(updateData)
-          .eq('id', id)
+          .insert(insertData)
           .select()
           .single()
         
         if (retryError) {
           throw createError({
             statusCode: 500,
-            statusMessage: retryError.message || 'Failed to update withdraw'
+            statusMessage: retryError.message || 'Failed to create withdraw'
           })
         }
         
         return {
           success: true,
           data: retryWithdraw,
-          message: 'Withdraw updated successfully'
+          message: 'Withdraw created successfully'
         }
       }
       
       throw createError({
         statusCode: 500,
-        statusMessage: updateError.message || 'Failed to update withdraw'
+        statusMessage: createError.message || 'Failed to create withdraw'
       })
     }
 
     return {
       success: true,
-      data: updatedWithdraw,
-      message: 'Withdraw updated successfully'
+      data: newWithdraw,
+      message: 'Withdraw created successfully'
     }
   } catch (err: any) {
     if (err && typeof err === 'object' && err.statusCode) {
@@ -166,7 +161,8 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: err?.message || 'Failed to update withdraw'
+      statusMessage: err?.message || 'Failed to create withdraw'
     })
   }
 })
+

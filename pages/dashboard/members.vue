@@ -118,32 +118,35 @@
                   <td class="py-4 px-4">
                     <div class="flex flex-col">
                       <span class="text-sm font-semibold text-green-600">
-                        {{ formatCurrency(member.total_balance || 0) }} USDT
+                        {{ formatCurrency(member.remaining_balance || 0) }} USDT
                       </span>
                       <span class="text-xs text-gray-500">
-                        Total Deposit Sukses
+                        Total Balance
+                      </span>
+                      <span class="text-xs text-gray-400 mt-0.5">
+                        Deposit: {{ formatCurrency(member.total_balance || 0) }} | Withdraw: {{ formatCurrency(member.total_withdraw || 0) }}
                       </span>
                     </div>
                   </td>
                   <td class="py-4 px-4">
                     <div class="flex flex-col">
                       <span class="text-sm font-semibold text-blue-600">
-                        {{ formatNumber(member.total_coin_from_deposits || 0) }} Coin
+                        {{ formatNumber(member.coin_balance || 0) }} Coin
                       </span>
                       <span class="text-xs text-gray-500">
-                        Total Coin dari Deposit
+                        Saldo Coin
                       </span>
                     </div>
                   </td>
                   <td class="py-4 px-4">
                     <span 
                       :class="[
-                        'px-2 py-1 rounded text-xs font-medium',
+                        'px-2 py-1 rounded text-xs font-semibold',
                         member.member_type === 'vip' 
-                          ? 'bg-purple-100 text-purple-700' 
+                          ? 'bg-purple-100 text-purple-800' 
                           : member.member_type === 'leader'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-blue-100 text-blue-800'
                       ]"
                     >
                       {{ member.member_type === 'vip' ? 'VIP' : member.member_type === 'leader' ? 'Leader' : 'Normal' }}
@@ -405,6 +408,26 @@
               <option value="inactive">Tidak Aktif</option>
               <option value="pending">Pending</option>
             </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <div class="relative">
+              <input
+                v-model="editForm.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Kosongkan jika tidak ingin mengubah password"
+                class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+              >
+                <Icon :name="showPassword ? 'eye-slash' : 'eye'" size="sm" />
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah password</p>
           </div>
 
           <!-- Withdraw Settings -->
@@ -672,6 +695,7 @@ const selectedMember = ref(null)
 const loadingReferrals = ref(false)
 const referralsData = ref(null)
 const referralsError = ref('')
+const showPassword = ref(false)
 
 const editForm = ref({
   id: '',
@@ -680,6 +704,7 @@ const editForm = ref({
   referral_code: '',
   member_type: 'normal',
   status: 'active',
+  password: '',
   bonus_aktif_withdraw_enabled: true,
   bonus_pasif_withdraw_enabled: true
 })
@@ -856,7 +881,7 @@ const formatNumber = (value) => {
   if (isNaN(numValue)) return '0.00'
   return new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 8
+    maximumFractionDigits: 2
   }).format(numValue)
 }
 
@@ -910,10 +935,12 @@ const openEditModal = (member) => {
     referral_code: member.referral_code || '',
     member_type: member.member_type || 'normal',
     status: member.status || 'active',
+    password: '',
     bonus_aktif_withdraw_enabled: member.bonus_aktif_withdraw_enabled !== undefined ? member.bonus_aktif_withdraw_enabled : true,
     bonus_pasif_withdraw_enabled: member.bonus_pasif_withdraw_enabled !== undefined ? member.bonus_pasif_withdraw_enabled : true
   }
   updateError.value = ''
+  showPassword.value = false
   showEditModal.value = true
 }
 
@@ -926,10 +953,12 @@ const closeEditModal = () => {
     referral_code: '',
     member_type: 'normal',
     status: 'active',
+    password: '',
     bonus_aktif_withdraw_enabled: true,
     bonus_pasif_withdraw_enabled: true
   }
   updateError.value = ''
+  showPassword.value = false
 }
 
 const handleUpdate = async () => {
@@ -937,17 +966,24 @@ const handleUpdate = async () => {
   updateError.value = ''
 
   try {
+    const body = {
+      email: editForm.value.email,
+      username: editForm.value.username,
+      referral_code: editForm.value.referral_code || null,
+      member_type: editForm.value.member_type,
+      status: editForm.value.status,
+      bonus_aktif_withdraw_enabled: editForm.value.bonus_aktif_withdraw_enabled,
+      bonus_pasif_withdraw_enabled: editForm.value.bonus_pasif_withdraw_enabled
+    }
+    
+    // Only include password if provided
+    if (editForm.value.password && editForm.value.password.trim() !== '') {
+      body.password = editForm.value.password
+    }
+    
     const response = await $fetch(`/api/admin/members/${editForm.value.id}`, {
       method: 'PUT',
-      body: {
-        email: editForm.value.email,
-        username: editForm.value.username,
-        referral_code: editForm.value.referral_code || null,
-        member_type: editForm.value.member_type,
-        status: editForm.value.status,
-        bonus_aktif_withdraw_enabled: editForm.value.bonus_aktif_withdraw_enabled,
-        bonus_pasif_withdraw_enabled: editForm.value.bonus_pasif_withdraw_enabled
-      }
+      body
     })
 
     if (response.success) {

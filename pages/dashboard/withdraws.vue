@@ -15,7 +15,7 @@
       <header class="hidden lg:block sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
         <div class="flex items-center justify-between px-6 py-4">
           <h1 class="text-2xl font-bold text-blue-600">
-            Rekap Deposit
+            Rekap Withdraw
           </h1>
         </div>
       </header>
@@ -42,20 +42,32 @@
                   v-model="searchQuery"
                   @input="handleSearch"
                   type="text"
-                  placeholder="Cari deposit (email, username, wallet address, payment method)..."
+                  placeholder="Cari withdraw (email, username, wallet address, network)..."
                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <!-- Status Filter -->
               <select
                 v-model="selectedStatus"
-                @change="fetchDeposits"
+                @change="fetchWithdraws"
                 class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
               >
                 <option value="">Semua Status</option>
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
                 <option value="rejected">Rejected</option>
+              </select>
+              <!-- Withdraw Type Filter -->
+              <select
+                v-model="selectedWithdrawType"
+                @change="fetchWithdraws"
+                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+              >
+                <option value="">Semua Tipe</option>
+                <option value="balance">Balance</option>
+                <option value="coin">Coin</option>
+                <option value="bonus_aktif">Bonus Aktif</option>
+                <option value="bonus_pasif">Bonus Pasif</option>
               </select>
             </div>
           </div>
@@ -69,28 +81,28 @@
           </div>
 
           <!-- Info Message (when no data but no error) -->
-          <div v-if="!errorMessage && deposits.length === 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div v-if="!errorMessage && withdraws.length === 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <div class="flex items-center gap-2">
               <Icon name="information-circle" size="md" class="text-blue-600" />
-              <p class="text-sm text-blue-600">Belum ada data deposit. Klik tombol "Tambah Deposit" untuk menambah deposit baru.</p>
+              <p class="text-sm text-blue-600">Belum ada data withdraw.</p>
             </div>
           </div>
 
-          <!-- Deposits Table -->
+          <!-- Withdraws Table -->
           <div v-if="!errorMessage" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
           <!-- Table Header -->
           <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-gray-800">
-                Daftar Deposit ({{ totalCount }})
+                Daftar Withdraw ({{ totalCount }})
               </h2>
-              <!-- Add Deposit Button -->
+              <!-- Add Withdraw Button -->
               <button 
                 @click="openCreateModal"
                 class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105"
               >
                 <Icon name="plus" size="sm" />
-                Tambah Deposit
+                Tambah Withdraw
               </button>
             </div>
           </div>
@@ -101,35 +113,37 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member ID</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (Input)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (USDT)</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coin Amount</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From Wallet</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To Wallet</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dari Wallet (Admin)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tujuan Wallet (Member)</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Network</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Hash</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-if="deposits.length === 0" class="hover:bg-gray-50">
-                  <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-500">
-                    Belum ada data deposit
+                <tr v-if="withdraws.length === 0" class="hover:bg-gray-50">
+                  <td colspan="12" class="px-6 py-12 text-center text-sm text-gray-500">
+                    Belum ada data withdraw
                   </td>
                 </tr>
                 <tr
-                  v-for="deposit in deposits"
-                  :key="deposit.id"
+                  v-for="withdraw in withdraws"
+                  :key="withdraw.id"
                   class="hover:bg-gray-50 transition-colors"
                 >
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ formatDate(deposit.created_at) }}
+                    {{ formatDate(withdraw.created_at) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <div class="font-mono text-xs text-gray-600 break-all max-w-xs">
-                      {{ deposit.member_id }}
+                      {{ withdraw.member_id }}
                     </div>
                     <button
-                      @click="copyHash(deposit.member_id)"
+                      @click="copyHash(withdraw.member_id)"
                       class="mt-1 text-xs text-blue-600 hover:text-blue-800"
                     >
                       Copy
@@ -137,38 +151,57 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <div>
-                      <div class="font-medium text-gray-900">{{ deposit.members?.username || 'N/A' }}</div>
-                      <div class="text-gray-500 text-xs">{{ deposit.members?.email || '' }}</div>
+                      <div class="font-medium text-gray-900">{{ withdraw.members?.username || 'N/A' }}</div>
+                      <div class="text-gray-500 text-xs">{{ withdraw.members?.email || '' }}</div>
                       <div class="mt-1">
                         <span
                           :class="[
                             'px-2 py-0.5 text-xs font-semibold rounded',
-                            deposit.members?.member_type === 'vip'
+                            withdraw.members?.member_type === 'vip'
                               ? 'bg-purple-100 text-purple-800'
-                              : deposit.members?.member_type === 'leader'
+                              : withdraw.members?.member_type === 'leader'
                               ? 'bg-emerald-100 text-emerald-800'
                               : 'bg-blue-100 text-blue-800'
                           ]"
                         >
-                          {{ formatMemberType(deposit.members?.member_type || 'normal') }}
+                          {{ formatMemberType(withdraw.members?.member_type || 'normal') }}
                         </span>
                       </div>
                     </div>
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      :class="[
+                        'px-2 py-1 text-xs font-semibold rounded',
+                        withdraw.withdraw_type === 'balance'
+                          ? 'bg-blue-100 text-blue-800'
+                          : withdraw.withdraw_type === 'coin'
+                          ? 'bg-purple-100 text-purple-800'
+                          : withdraw.withdraw_type === 'bonus_aktif'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      ]"
+                    >
+                      {{ formatWithdrawType(withdraw.withdraw_type) }}
+                    </span>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                    {{ formatCurrency(deposit.amount) }} USDT
+                    {{ formatCurrency(withdraw.amount) }} USDT
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                    {{ formatCoinAmount(calculateCoinAmount(deposit)) }} Coin
+                    <span v-if="withdraw.withdraw_type === 'coin'">
+                      {{ formatNumber(calculateCoinAmount(withdraw)) }} Coin
+                    </span>
+                    <span v-else class="text-gray-400">-</span>
                   </td>
                   <td class="px-6 py-4 text-sm">
                     <div class="max-w-xs">
                       <div class="font-mono text-xs text-gray-700 break-all">
-                        {{ deposit.from_wallet_address || '-' }}
+                        {{ withdraw.admin_wallet_address || '-' }}
                       </div>
                       <button
-                        v-if="deposit.from_wallet_address"
-                        @click="copyHash(deposit.from_wallet_address)"
+                        v-if="withdraw.admin_wallet_address"
+                        @click="copyHash(withdraw.admin_wallet_address)"
                         class="mt-1 text-xs text-blue-600 hover:text-blue-800"
                       >
                         Copy
@@ -178,11 +211,11 @@
                   <td class="px-6 py-4 text-sm">
                     <div class="max-w-xs">
                       <div class="font-mono text-xs text-gray-700 break-all">
-                        {{ deposit.to_wallet_address || '-' }}
+                        {{ withdraw.wallet_address || '-' }}
                       </div>
                       <button
-                        v-if="deposit.to_wallet_address"
-                        @click="copyHash(deposit.to_wallet_address)"
+                        v-if="withdraw.wallet_address"
+                        @click="copyHash(withdraw.wallet_address)"
                         class="mt-1 text-xs text-blue-600 hover:text-blue-800"
                       >
                         Copy
@@ -193,41 +226,56 @@
                     <span
                       :class="[
                         'px-2 py-1 text-xs font-semibold rounded',
-                        deposit.wallet_model?.includes('BEP20')
+                        withdraw.wallet_network === 'BEP20'
                           ? 'bg-amber-100 text-amber-800'
-                          : deposit.wallet_model?.includes('ERC20')
+                          : withdraw.wallet_network === 'ERC20'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-800'
                       ]"
                     >
-                      {{ deposit.wallet_model || deposit.payment_method || '-' }}
+                      {{ withdraw.wallet_network || '-' }}
                     </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <div class="max-w-xs">
+                      <div v-if="withdraw.hash" class="font-mono text-xs text-gray-700 break-all">
+                        {{ withdraw.hash }}
+                      </div>
+                      <span v-else class="text-gray-400 text-xs">-</span>
+                      <button
+                        v-if="withdraw.hash"
+                        @click="copyHash(withdraw.hash)"
+                        class="mt-1 text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span
                       :class="[
                         'px-2 py-1 rounded-lg text-xs font-medium',
-                        deposit.status === 'completed'
+                        withdraw.status === 'completed'
                           ? 'bg-green-100 text-green-800'
-                          : deposit.status === 'pending'
+                          : withdraw.status === 'pending'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       ]"
                     >
-                      {{ deposit.status === 'completed' ? 'Selesai' : deposit.status === 'pending' ? 'Pending' : 'Ditolak' }}
+                      {{ withdraw.status === 'completed' ? 'Selesai' : withdraw.status === 'pending' ? 'Pending' : 'Ditolak' }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center gap-3">
                       <button 
-                        @click="openEditModal(deposit)"
+                        @click="openEditModal(withdraw)"
                         class="flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 text-sm font-medium"
                       >
                         <Icon name="edit" size="sm" />
                         Edit
                       </button>
                       <button 
-                        @click="confirmDelete(deposit)"
+                        @click="confirmDelete(withdraw)"
                         class="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 text-sm font-medium"
                       >
                         <Icon name="delete" size="sm" />
@@ -248,7 +296,7 @@
                 <div class="text-sm text-gray-700">
                   Menampilkan <span class="font-semibold">{{ offset + 1 }}</span> - 
                   <span class="font-semibold">{{ Math.min(offset + limit, totalCount) }}</span> dari 
-                  <span class="font-semibold">{{ totalCount }}</span> deposit
+                  <span class="font-semibold">{{ totalCount }}</span> withdraw
                 </div>
                 <div class="flex items-center gap-2">
                   <label class="text-sm text-gray-700">Items per page:</label>
@@ -359,7 +407,7 @@
       <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-semibold text-gray-800">Tambah Deposit Baru</h3>
+            <h3 class="text-xl font-semibold text-gray-800">Tambah Withdraw Baru</h3>
             <button 
               @click="closeCreateModal"
               class="text-gray-400 hover:text-gray-600 transition"
@@ -393,159 +441,120 @@
             </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT) *</label>
-            <input
-              v-model="createForm.amount"
-              type="number"
-              step="0.00000001"
-              min="0"
-              required
-              placeholder="0.00"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-
-          <!-- Coin Preview -->
-          <div 
-            v-if="createForm.amount && selectedMemberInfo && selectedMemberInfo.coinPrice > 0" 
-            class="p-4 bg-blue-50 border border-blue-200 rounded-lg"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-gray-600 mb-1">Jumlah Coin yang akan didapat:</p>
-                <p class="text-2xl font-bold text-blue-600">
-                  {{ formatCoinAmount(coinPreview) }} <span class="text-base text-gray-600">Coin</span>
-                </p>
-              </div>
-            </div>
-            <div class="mt-3 pt-3 border-t border-blue-200">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-gray-600">Amount:</span>
-                <span class="font-medium">{{ formatCurrency(createForm.amount) }} USDT</span>
-              </div>
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-gray-600">Jenis Member:</span>
-                <span class="font-medium">{{ formatMemberType(selectedMemberInfo.member_type) }}</span>
-              </div>
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-gray-600">Harga Coin:</span>
-                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.coinPrice) }} USDT/Coin</span>
-              </div>
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-gray-600">Conversion Rate:</span>
-                <span class="font-medium">1 USDT = {{ formatNumber(conversionRate) }} Coin</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Conversion Rate</label>
-            <input
-              v-model="createForm.conversion_rate"
-              type="number"
-              step="0.00000001"
-              min="0"
-              placeholder="0.00"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-            />
-            <p class="text-xs text-gray-500 mt-1">Kosongkan untuk auto-calculate berdasarkan harga coin member</p>
-          </div>
-
-          <!-- Network Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Network *</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                @click="selectNetwork('BEP20')"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 font-semibold transition-all',
-                  createForm.network === 'BEP20'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-white text-gray-700 border-amber-500/30 hover:border-amber-500/50'
-                ]"
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Type *</label>
+              <select
+                v-model="createForm.withdraw_type"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
               >
-                USDT BEP20
-              </button>
-              <button
-                type="button"
-                @click="selectNetwork('ERC20')"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 font-semibold transition-all',
-                  createForm.network === 'ERC20'
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-blue-500/30 hover:border-blue-500/50'
-                ]"
-              >
-                USDT ERC20
-              </button>
+                <option value="balance">Balance</option>
+                <option value="coin">Coin</option>
+                <option value="bonus_aktif">Bonus Aktif</option>
+                <option value="bonus_pasif">Bonus Pasif</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT) *</label>
+              <input
+                v-model="createForm.amount"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                placeholder="0.00"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              />
             </div>
           </div>
 
-          <!-- Admin Wallet Address (auto-filled from database) -->
-          <div 
-            v-if="createForm.network" 
-            :class="[
-              'bg-gradient-to-r rounded-lg p-4 border',
-              createForm.network === 'BEP20'
-                ? 'from-amber-500/10 to-amber-600/10 border-amber-500/30'
-                : 'from-blue-500/10 to-blue-600/10 border-blue-500/30'
-            ]"
-          >
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Network *</label>
+              <select
+                v-model="createForm.wallet_network"
+                @change="onNetworkChange"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="BEP20">BEP20</option>
+                <option value="ERC20">ERC20</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Model</label>
+              <input
+                v-model="createForm.wallet_model"
+                type="text"
+                readonly
+                placeholder="Akan terisi otomatis berdasarkan network"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          <div>
             <label class="block text-sm font-medium mb-2 text-gray-700">
-              Admin Wallet Address (To Wallet) *
+              Admin Wallet Address (From Wallet) *
               <span 
                 :class="[
                   'ml-2 px-2 py-0.5 text-xs font-semibold rounded',
-                  createForm.network === 'BEP20' 
+                  createForm.wallet_network === 'BEP20' 
                     ? 'bg-amber-500/20 text-amber-700 border border-amber-500/30' 
-                    : 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+                    : createForm.wallet_network === 'ERC20'
+                    ? 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+                    : 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
                 ]"
               >
-                {{ createForm.network }}
+                {{ createForm.wallet_network }}
               </span>
             </label>
             <div class="flex items-center gap-2">
               <input
-                v-model="createForm.to_wallet_address"
+                v-model="adminWalletAddress"
                 type="text"
-                :readonly="!!adminWalletAddress"
-                required
+                readonly
                 :class="[
                   'flex-1 px-4 py-3 rounded-lg font-mono text-sm border focus:outline-none',
-                  createForm.network === 'BEP20'
+                  createForm.wallet_network === 'BEP20'
                     ? adminWalletAddress
                       ? 'bg-white text-gray-900 border-amber-500/30'
                       : 'bg-white text-gray-900 border-amber-500/30 focus:border-amber-500'
-                    : adminWalletAddress
+                    : createForm.wallet_network === 'ERC20'
+                    ? adminWalletAddress
                       ? 'bg-white text-gray-900 border-blue-500/30'
                       : 'bg-white text-gray-900 border-blue-500/30 focus:border-blue-500'
+                    : 'bg-white text-gray-900 border-gray-500/30'
                 ]"
                 :placeholder="adminWalletAddress ? 'Wallet admin dari database' : 'Pilih network untuk load wallet admin'"
               />
               <button
                 v-if="adminWalletAddress"
                 type="button"
-                @click="copyWalletAddress(createForm.to_wallet_address)"
+                @click="copyWalletAddress(adminWalletAddress)"
                 :class="[
                   'px-3 py-3 font-semibold rounded-lg transition',
-                  createForm.network === 'BEP20'
+                  createForm.wallet_network === 'BEP20'
                     ? 'bg-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    : createForm.wallet_network === 'ERC20'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-500 text-white hover:bg-gray-600'
                 ]"
                 title="Copy wallet address"
               >
                 <Icon name="clipboard-document" size="sm" />
               </button>
               <button
-                v-if="createForm.network"
+                v-if="createForm.wallet_network && (createForm.wallet_network === 'BEP20' || createForm.wallet_network === 'ERC20')"
                 type="button"
                 @click="loadRandomWalletAdmin"
                 :disabled="isLoadingWallet"
                 :class="[
                   'px-3 py-3 font-semibold rounded-lg transition',
-                  createForm.network === 'BEP20'
+                  createForm.wallet_network === 'BEP20'
                     ? 'bg-amber-500 text-white hover:bg-amber-600 disabled:bg-amber-300'
                     : 'bg-blue-500 text-white hover:bg-blue-600 disabled:bg-blue-300',
                   isLoadingWallet && 'opacity-50 cursor-not-allowed'
@@ -558,8 +567,11 @@
             <p v-if="adminWalletAddress" class="text-xs text-gray-500 mt-2">
               ✓ Wallet admin diambil dari database secara random. Klik refresh untuk ganti wallet.
             </p>
-            <p v-else-if="createForm.network" class="text-xs text-amber-600 mt-2">
+            <p v-else-if="createForm.wallet_network && (createForm.wallet_network === 'BEP20' || createForm.wallet_network === 'ERC20')" class="text-xs text-amber-600 mt-2">
               ⏳ Memuat wallet admin dari database...
+            </p>
+            <p v-else-if="createForm.wallet_network" class="text-xs text-gray-500 mt-2">
+              Wallet admin auto-fill hanya tersedia untuk BEP20 dan ERC20.
             </p>
             <p v-else class="text-xs text-gray-500 mt-2">
               Pilih network (BEP20 atau ERC20) untuk memuat wallet admin dari database.
@@ -567,38 +579,53 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">From Wallet Address *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Member Wallet Address (To Wallet) *</label>
             <input
-              v-model="createForm.from_wallet_address"
+              v-model="createForm.wallet_address"
               type="text"
               required
-              placeholder="Masukkan wallet address pengirim"
+              placeholder="Masukkan wallet address member tujuan"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 font-mono text-sm"
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
-              <input
-                v-model="createForm.payment_method"
-                type="text"
-                required
-                placeholder="USDT, BTC, dll"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-              />
+          <!-- Coin Preview (if withdraw_type = coin) -->
+          <div 
+            v-if="createForm.withdraw_type === 'coin' && createForm.amount && selectedMemberInfo && selectedMemberInfo.coinPrice > 0" 
+            class="p-4 bg-blue-50 border border-blue-200 rounded-lg"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Jumlah Coin yang akan ditarik:</p>
+                <p class="text-2xl font-bold text-blue-600">
+                  {{ formatNumber(coinPreview) }} <span class="text-base text-gray-600">Coin</span>
+                </p>
+              </div>
             </div>
+            <div class="mt-3 pt-3 border-t border-blue-200">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-gray-600">Amount:</span>
+                <span class="font-medium">{{ formatCurrency(createForm.amount) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-gray-600">Jenis Member:</span>
+                <span class="font-medium">{{ formatMemberType(selectedMemberInfo.member_type) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Harga Coin:</span>
+                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.coinPrice) }} USDT/Coin</span>
+              </div>
+            </div>
+          </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Model</label>
-              <input
-                v-model="createForm.wallet_model"
-                type="text"
-                placeholder="Auto-filled berdasarkan network"
-                readonly
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-              />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <textarea
+              v-model="createForm.notes"
+              rows="3"
+              placeholder="Catatan tambahan (opsional)"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            ></textarea>
           </div>
 
           <div>
@@ -647,7 +674,7 @@
       <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-semibold text-gray-800">Edit Deposit</h3>
+            <h3 class="text-xl font-semibold text-gray-800">Edit Withdraw</h3>
             <button 
               @click="closeEditModal"
               class="text-gray-400 hover:text-gray-600 transition"
@@ -671,134 +698,117 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Type</label>
+              <select
+                v-model="editForm.withdraw_type"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="balance">Balance</option>
+                <option value="coin">Coin</option>
+                <option value="bonus_aktif">Bonus Aktif</option>
+                <option value="bonus_pasif">Bonus Pasif</option>
+              </select>
+            </div>
+
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT) *</label>
               <input
                 v-model="editForm.amount"
                 type="number"
-                step="0.00000001"
+                step="0.01"
                 min="0"
                 required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
               />
             </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Network *</label>
+              <select
+                v-model="editForm.wallet_network"
+                @change="onEditNetworkChange"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="BEP20">BEP20</option>
+                <option value="ERC20">ERC20</option>
+              </select>
+            </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Coin Amount</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Model</label>
               <input
-                v-model="editForm.coin_amount"
-                type="number"
-                step="0.00000001"
-                min="0"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                v-model="editForm.wallet_model"
+                type="text"
+                readonly
+                placeholder="Akan terisi otomatis berdasarkan network"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Conversion Rate</label>
-            <input
-              v-model="editForm.conversion_rate"
-              type="number"
-              step="0.00000001"
-              min="0"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-
-          <!-- Network Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Network *</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                @click="selectEditNetwork('BEP20')"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 font-semibold transition-all',
-                  editForm.network === 'BEP20'
-                    ? 'bg-amber-500 text-white border-amber-500'
-                    : 'bg-white text-gray-700 border-amber-500/30 hover:border-amber-500/50'
-                ]"
-              >
-                USDT BEP20
-              </button>
-              <button
-                type="button"
-                @click="selectEditNetwork('ERC20')"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 font-semibold transition-all',
-                  editForm.network === 'ERC20'
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-blue-500/30 hover:border-blue-500/50'
-                ]"
-              >
-                USDT ERC20
-              </button>
-            </div>
-          </div>
-
-          <!-- Admin Wallet Address (auto-filled from database) -->
-          <div 
-            v-if="editForm.network" 
-            :class="[
-              'bg-gradient-to-r rounded-lg p-4 border',
-              editForm.network === 'BEP20'
-                ? 'from-amber-500/10 to-amber-600/10 border-amber-500/30'
-                : 'from-blue-500/10 to-blue-600/10 border-blue-500/30'
-            ]"
-          >
             <label class="block text-sm font-medium mb-2 text-gray-700">
-              Admin Wallet Address (To Wallet) *
+              Admin Wallet Address (From Wallet) *
               <span 
                 :class="[
                   'ml-2 px-2 py-0.5 text-xs font-semibold rounded',
-                  editForm.network === 'BEP20' 
+                  editForm.wallet_network === 'BEP20' 
                     ? 'bg-amber-500/20 text-amber-700 border border-amber-500/30' 
-                    : 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+                    : editForm.wallet_network === 'ERC20'
+                    ? 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+                    : 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
                 ]"
               >
-                {{ editForm.network }}
+                {{ editForm.wallet_network }}
               </span>
             </label>
             <div class="flex items-center gap-2">
               <input
-                v-model="editForm.to_wallet_address"
+                v-model="editAdminWalletAddress"
                 type="text"
-                :readonly="!!editAdminWalletAddress"
-                required
+                readonly
                 :class="[
                   'flex-1 px-4 py-3 rounded-lg font-mono text-sm border focus:outline-none',
-                  editForm.network === 'BEP20'
+                  editForm.wallet_network === 'BEP20'
                     ? editAdminWalletAddress
                       ? 'bg-white text-gray-900 border-amber-500/30'
                       : 'bg-white text-gray-900 border-amber-500/30 focus:border-amber-500'
-                    : editAdminWalletAddress
+                    : editForm.wallet_network === 'ERC20'
+                    ? editAdminWalletAddress
                       ? 'bg-white text-gray-900 border-blue-500/30'
                       : 'bg-white text-gray-900 border-blue-500/30 focus:border-blue-500'
+                    : 'bg-white text-gray-900 border-gray-500/30'
                 ]"
                 :placeholder="editAdminWalletAddress ? 'Wallet admin dari database' : 'Pilih network untuk load wallet admin'"
               />
               <button
                 v-if="editAdminWalletAddress"
                 type="button"
-                @click="copyWalletAddress(editForm.to_wallet_address)"
+                @click="copyWalletAddress(editAdminWalletAddress)"
                 :class="[
                   'px-3 py-3 font-semibold rounded-lg transition',
-                  editForm.network === 'BEP20'
+                  editForm.wallet_network === 'BEP20'
                     ? 'bg-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    : editForm.wallet_network === 'ERC20'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-500 text-white hover:bg-gray-600'
                 ]"
                 title="Copy wallet address"
               >
                 <Icon name="clipboard-document" size="sm" />
               </button>
               <button
-                v-if="editForm.network"
+                v-if="editForm.wallet_network && (editForm.wallet_network === 'BEP20' || editForm.wallet_network === 'ERC20')"
                 type="button"
                 @click="loadRandomEditWalletAdmin"
                 :disabled="isLoadingEditWallet"
                 :class="[
                   'px-3 py-3 font-semibold rounded-lg transition',
-                  editForm.network === 'BEP20'
+                  editForm.wallet_network === 'BEP20'
                     ? 'bg-amber-500 text-white hover:bg-amber-600 disabled:bg-amber-300'
                     : 'bg-blue-500 text-white hover:bg-blue-600 disabled:bg-blue-300',
                   isLoadingEditWallet && 'opacity-50 cursor-not-allowed'
@@ -811,8 +821,11 @@
             <p v-if="editAdminWalletAddress" class="text-xs text-gray-500 mt-2">
               ✓ Wallet admin diambil dari database secara random. Klik refresh untuk ganti wallet.
             </p>
-            <p v-else-if="editForm.network" class="text-xs text-amber-600 mt-2">
+            <p v-else-if="editForm.wallet_network && (editForm.wallet_network === 'BEP20' || editForm.wallet_network === 'ERC20')" class="text-xs text-amber-600 mt-2">
               ⏳ Memuat wallet admin dari database...
+            </p>
+            <p v-else-if="editForm.wallet_network" class="text-xs text-gray-500 mt-2">
+              Wallet admin auto-fill hanya tersedia untuk BEP20 dan ERC20.
             </p>
             <p v-else class="text-xs text-gray-500 mt-2">
               Pilih network (BEP20 atau ERC20) untuk memuat wallet admin dari database.
@@ -820,36 +833,34 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">From Wallet Address *</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Member Wallet Address (To Wallet) *</label>
             <input
-              v-model="editForm.from_wallet_address"
+              v-model="editForm.wallet_address"
               type="text"
               required
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 font-mono text-sm"
             />
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
-              <input
-                v-model="editForm.payment_method"
-                type="text"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Transaction Hash</label>
+            <input
+              v-model="editForm.hash"
+              type="text"
+              placeholder="Masukkan transaction hash setelah transfer"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 font-mono text-sm"
+            />
+            <p class="text-xs text-gray-500 mt-1">Isi transaction hash setelah admin melakukan transfer</p>
+          </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Model</label>
-              <input
-                v-model="editForm.wallet_model"
-                type="text"
-                readonly
-                placeholder="Auto-filled berdasarkan network"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-              />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <textarea
+              v-model="editForm.notes"
+              rows="3"
+              placeholder="Catatan tambahan (opsional)"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            ></textarea>
           </div>
 
           <div>
@@ -897,9 +908,9 @@
     >
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div class="p-6">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Hapus Deposit</h3>
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">Hapus Withdraw</h3>
           <p class="text-gray-600 mb-6">
-            Apakah Anda yakin ingin menghapus deposit dengan amount <strong>{{ formatCurrency(depositToDelete?.amount) }} USDT</strong>? 
+            Apakah Anda yakin ingin menghapus withdraw dengan amount <strong>{{ formatCurrency(withdrawToDelete?.amount) }} USDT</strong>? 
             Tindakan ini tidak dapat dibatalkan.
           </p>
 
@@ -935,9 +946,9 @@ definePageMeta({
 
 const isMobileMenuOpen = ref(false)
 const loading = ref(false)
-const deposits = ref([])
-const members = ref([])
+const withdraws = ref([])
 const selectedStatus = ref('')
+const selectedWithdrawType = ref('')
 const searchQuery = ref('')
 const searchTimeout = ref(null)
 const totalCount = ref(0)
@@ -955,25 +966,25 @@ const isDeleting = ref(false)
 const createError = ref('')
 const updateError = ref('')
 const deleteError = ref('')
-const depositToDelete = ref(null)
+const withdrawToDelete = ref(null)
+const members = ref([])
 const coinSettings = ref(null)
 const selectedMemberInfo = ref(null)
 const coinPreview = ref(0)
-const conversionRate = ref(2.0)
 const adminWalletAddress = ref('')
 const isLoadingWallet = ref(false)
+const editAdminWalletAddress = ref('')
+const isLoadingEditWallet = ref(false)
 
 // Forms
 const createForm = ref({
   member_id: '',
-  network: '', // BEP20 or ERC20
+  withdraw_type: 'balance',
   amount: '',
-  coin_amount: '',
-  conversion_rate: '',
-  from_wallet_address: '',
-  to_wallet_address: '',
-  payment_method: '',
+  wallet_address: '',
+  wallet_network: 'BEP20',
   wallet_model: '',
+  notes: '',
   status: 'pending'
 })
 
@@ -981,26 +992,22 @@ const editForm = ref({
   id: '',
   member_id: '',
   member_email: '',
+  withdraw_type: 'balance',
   amount: '',
-  coin_amount: '',
-  conversion_rate: '',
-  network: '',
-  from_wallet_address: '',
-  to_wallet_address: '',
-  payment_method: '',
+  wallet_address: '',
+  wallet_network: 'BEP20',
   wallet_model: '',
+  hash: '',
+  notes: '',
   status: 'pending'
 })
-
-const editAdminWalletAddress = ref('')
-const isLoadingEditWallet = ref(false)
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
 }
 
-// Fetch deposits
-const fetchDeposits = async () => {
+// Fetch withdraws
+const fetchWithdraws = async () => {
   loading.value = true
   errorMessage.value = ''
   try {
@@ -1011,40 +1018,43 @@ const fetchDeposits = async () => {
     if (selectedStatus.value) {
       params.status = selectedStatus.value
     }
+    if (selectedWithdrawType.value) {
+      params.withdraw_type = selectedWithdrawType.value
+    }
     if (searchQuery.value && searchQuery.value.trim()) {
       params.search = searchQuery.value.trim()
     }
 
-    console.log('Fetching deposits with params:', params)
-    const response = await $fetch('/api/admin/deposits', {
+    console.log('Fetching withdraws with params:', params)
+    const response = await $fetch('/api/admin/withdraws', {
       params
     })
 
-    console.log('Deposits API Response:', response)
+    console.log('Withdraws API Response:', response)
 
     if (response && response.success) {
-      deposits.value = response.data || []
+      withdraws.value = response.data || []
       totalCount.value = response.count || 0
-      console.log('Deposits loaded:', deposits.value.length, 'items')
+      console.log('Withdraws loaded:', withdraws.value.length, 'items')
       console.log('Total count:', totalCount.value)
       
-      if (deposits.value.length === 0 && totalCount.value === 0) {
-        errorMessage.value = 'Belum ada data deposit. Silakan tambah deposit baru.'
+      if (withdraws.value.length === 0 && totalCount.value === 0) {
+        errorMessage.value = 'Belum ada data withdraw.'
       }
     } else {
-      errorMessage.value = response?.message || 'Gagal memuat data deposit'
-      deposits.value = []
+      errorMessage.value = response?.message || 'Gagal memuat data withdraw'
+      withdraws.value = []
       totalCount.value = 0
     }
   } catch (error) {
-    console.error('Failed to fetch deposits:', error)
+    console.error('Failed to fetch withdraws:', error)
     console.error('Error details:', {
       message: error?.message,
       data: error?.data,
       statusCode: error?.statusCode
     })
-    errorMessage.value = error?.data?.message || error?.message || 'Gagal memuat data deposit. Silakan coba lagi.'
-    deposits.value = []
+    errorMessage.value = error?.data?.message || error?.message || 'Gagal memuat data withdraw. Silakan coba lagi.'
+    withdraws.value = []
     totalCount.value = 0
   } finally {
     loading.value = false
@@ -1053,35 +1063,47 @@ const fetchDeposits = async () => {
 
 // Format currency
 const formatCurrency = (value) => {
-  if (!value || value === 0) return '0.00'
-  const numValue = typeof value === 'number' ? value : parseFloat(value)
-  if (isNaN(numValue)) return '0.00'
-  return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 8
-  }).format(numValue)
+  try {
+    if (value === null || value === undefined || value === '') return '0.00'
+    if (value === 0) return '0.00'
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    if (isNaN(numValue)) return '0.00'
+    return new Intl.NumberFormat('id-ID', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numValue)
+  } catch (error) {
+    console.error('Error formatting currency:', error)
+    return '0.00'
+  }
 }
 
 // Format number
 const formatNumber = (value) => {
-  if (!value || value === 0) return '0.00'
-  const numValue = typeof value === 'number' ? value : parseFloat(value)
-  if (isNaN(numValue)) return '0.00'
-  return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 8
-  }).format(numValue)
+  try {
+    if (value === null || value === undefined || value === '') return '0.00'
+    if (value === 0) return '0.00'
+    const numValue = typeof value === 'number' ? value : parseFloat(value)
+    if (isNaN(numValue)) return '0.00'
+    return new Intl.NumberFormat('id-ID', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8
+    }).format(numValue)
+  } catch (error) {
+    console.error('Error formatting number:', error)
+    return '0.00'
+  }
 }
 
-// Format coin amount (2 decimal places)
-const formatCoinAmount = (value) => {
-  if (!value || value === 0) return '0.00'
-  const numValue = typeof value === 'number' ? value : parseFloat(value)
-  if (isNaN(numValue)) return '0.00'
-  return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(numValue)
+// Format withdraw type
+const formatWithdrawType = (type) => {
+  const types = {
+    balance: 'Balance',
+    coin: 'Coin',
+    bonus_aktif: 'Bonus Aktif',
+    bonus_pasif: 'Bonus Pasif'
+  }
+  return types[type] || type
 }
 
 // Format date
@@ -1101,10 +1123,10 @@ const formatDate = (dateString) => {
 const copyHash = async (hash) => {
   try {
     await navigator.clipboard.writeText(hash)
-    alert('Transaction hash berhasil di-copy!')
+    alert('Berhasil di-copy!')
   } catch (error) {
     console.error('Failed to copy hash:', error)
-    alert('Gagal copy transaction hash')
+    alert('Gagal copy')
   }
 }
 
@@ -1162,37 +1184,37 @@ const visiblePages = computed(() => {
 const goToPage = (page) => {
   if (typeof page === 'number' && page >= 1 && page <= totalPages.value) {
     offset.value = (page - 1) * limit.value
-    fetchDeposits()
+    fetchWithdraws()
   }
 }
 
 const goToFirstPage = () => {
   offset.value = 0
-  fetchDeposits()
+  fetchWithdraws()
 }
 
 const goToLastPage = () => {
   offset.value = (totalPages.value - 1) * limit.value
-  fetchDeposits()
+  fetchWithdraws()
 }
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     offset.value += limit.value
-    fetchDeposits()
+    fetchWithdraws()
   }
 }
 
 const previousPage = () => {
   if (currentPage.value > 1) {
     offset.value = Math.max(0, offset.value - limit.value)
-    fetchDeposits()
+    fetchWithdraws()
   }
 }
 
 const handleLimitChange = () => {
   offset.value = 0
-  fetchDeposits()
+  fetchWithdraws()
 }
 
 // Handle search with debounce
@@ -1207,14 +1229,20 @@ const handleSearch = () => {
   
   // Debounce search - wait 500ms after user stops typing
   searchTimeout.value = setTimeout(() => {
-    fetchDeposits()
+    fetchWithdraws()
   }, 500)
 }
 
 // Watch status change
 watch(selectedStatus, () => {
   offset.value = 0
-  fetchDeposits()
+  fetchWithdraws()
+})
+
+// Watch withdraw type change
+watch(selectedWithdrawType, () => {
+  offset.value = 0
+  fetchWithdraws()
 })
 
 // Fetch coin settings
@@ -1227,31 +1255,6 @@ const fetchCoinSettings = async () => {
   } catch (error) {
     console.error('Failed to fetch coin settings:', error)
   }
-}
-
-// Calculate coin amount based on amount and member type
-const calculateCoinAmount = (deposit) => {
-  if (!deposit || !deposit.amount) return 0
-  
-  const amount = parseFloat(deposit.amount) || 0
-  if (amount <= 0) return 0
-  
-  // Get member type from deposit.members
-  const memberType = deposit.members?.member_type || 'normal'
-  
-  // Get coin price based on member type
-  if (!coinSettings.value) return 0
-  
-  let pricePerCoin = parseFloat(coinSettings.value.normal_price_usdt) || 0.5
-  if (memberType === 'vip' && coinSettings.value.vip_price_usdt) {
-    pricePerCoin = parseFloat(coinSettings.value.vip_price_usdt)
-  } else if (memberType === 'leader' && coinSettings.value.leader_price_usdt) {
-    pricePerCoin = parseFloat(coinSettings.value.leader_price_usdt)
-  }
-  
-  // Calculate coin amount: amount (USDT) / price_per_coin
-  if (pricePerCoin <= 0) return 0
-  return amount / pricePerCoin
 }
 
 // Fetch members for dropdown
@@ -1298,12 +1301,35 @@ const getCoinPriceByMemberType = (memberType) => {
   return parseFloat(coinSettings.value.normal_price_usdt) || 0.5
 }
 
+// Calculate coin amount based on withdraw amount and member type
+const calculateCoinAmount = (withdraw) => {
+  try {
+    if (!withdraw || !withdraw.amount) return 0
+    
+    // Only calculate for coin withdraw type
+    if (withdraw.withdraw_type !== 'coin') return 0
+    
+    if (!withdraw.members || !coinSettings.value) return 0
+    
+    const memberType = withdraw.members?.member_type || 'normal'
+    const pricePerCoin = getCoinPriceByMemberType(memberType)
+    
+    if (pricePerCoin > 0) {
+      const amount = parseFloat(withdraw.amount) || 0
+      return amount / pricePerCoin
+    }
+    return 0
+  } catch (error) {
+    console.error('Error calculating coin amount:', error)
+    return 0
+  }
+}
+
 // Handle member change
 const onMemberChange = () => {
   if (!createForm.value.member_id) {
     selectedMemberInfo.value = null
     coinPreview.value = 0
-    conversionRate.value = 2.0
     return
   }
   
@@ -1314,50 +1340,32 @@ const onMemberChange = () => {
       ...member,
       coinPrice
     }
-    // Calculate conversion rate: 1 USDT / price_per_coin = jumlah coin per 1 USDT
-    conversionRate.value = coinPrice > 0 ? 1 / coinPrice : 2.0
     calculateCoinPreview()
   } else {
     selectedMemberInfo.value = null
     coinPreview.value = 0
-    conversionRate.value = 2.0
   }
 }
 
 // Calculate coin preview
 const calculateCoinPreview = () => {
   if (
+    createForm.value.withdraw_type === 'coin' &&
     createForm.value.amount &&
     selectedMemberInfo.value &&
     selectedMemberInfo.value.coinPrice > 0
   ) {
     const amount = parseFloat(createForm.value.amount) || 0
-    coinPreview.value = amount * conversionRate.value
-    
-    // Auto-fill conversion_rate if empty
-    if (!createForm.value.conversion_rate) {
-      createForm.value.conversion_rate = conversionRate.value.toFixed(8)
-    }
+    coinPreview.value = amount / selectedMemberInfo.value.coinPrice
   } else {
     coinPreview.value = 0
   }
 }
 
-// Select network and load wallet address
-const selectNetwork = async (network) => {
-  createForm.value.network = network
-  createForm.value.wallet_model = `USDT_${network}`
-  createForm.value.payment_method = `USDT_${network}`
-  
-  // Load wallet admin from database based on selected network
-  await loadWalletAddressByNetwork(network)
-}
-
 // Load wallet address based on network
 const loadWalletAddressByNetwork = async (network) => {
-  if (!network) {
+  if (!network || (network !== 'BEP20' && network !== 'ERC20')) {
     adminWalletAddress.value = ''
-    createForm.value.to_wallet_address = ''
     return
   }
 
@@ -1371,17 +1379,88 @@ const loadWalletAddressByNetwork = async (network) => {
       // Get random wallet address from available wallets
       const randomIndex = Math.floor(Math.random() * response.data.length)
       adminWalletAddress.value = response.data[randomIndex].address || ''
-      createForm.value.to_wallet_address = adminWalletAddress.value
     } else {
       adminWalletAddress.value = ''
-      createForm.value.to_wallet_address = ''
     }
   } catch (error) {
     console.error('Failed to load wallet address:', error)
     adminWalletAddress.value = ''
-    createForm.value.to_wallet_address = ''
   } finally {
     isLoadingWallet.value = false
+  }
+}
+
+// Load random wallet admin from database (for refresh button)
+const loadRandomWalletAdmin = async () => {
+  const network = createForm.value.wallet_network || 'BEP20'
+  await loadWalletAddressByNetwork(network)
+}
+
+// Load wallet address for edit form
+const loadEditWalletAddressByNetwork = async (network) => {
+  if (!network || (network !== 'BEP20' && network !== 'ERC20')) {
+    editAdminWalletAddress.value = ''
+    return
+  }
+
+  isLoadingEditWallet.value = true
+  try {
+    const response = await $fetch('/api/admin/wallet-addresses', {
+      params: { network }
+    })
+
+    if (response.success && response.data && response.data.length > 0) {
+      // Get random wallet address from available wallets
+      const randomIndex = Math.floor(Math.random() * response.data.length)
+      editAdminWalletAddress.value = response.data[randomIndex].address || ''
+    } else {
+      editAdminWalletAddress.value = ''
+    }
+  } catch (error) {
+    console.error('Failed to load wallet address:', error)
+    editAdminWalletAddress.value = ''
+  } finally {
+    isLoadingEditWallet.value = false
+  }
+}
+
+// Load random wallet admin for edit form
+const loadRandomEditWalletAdmin = async () => {
+  const network = editForm.value.wallet_network || 'BEP20'
+  await loadEditWalletAddressByNetwork(network)
+}
+
+// Handle network change in edit form
+const onEditNetworkChange = () => {
+  editAdminWalletAddress.value = ''
+  // Auto-fill wallet_model based on network
+  if (editForm.value.wallet_network === 'BEP20') {
+    editForm.value.wallet_model = 'USDT_BEP20'
+  } else if (editForm.value.wallet_network === 'ERC20') {
+    editForm.value.wallet_model = 'USDT_ERC20'
+  } else {
+    editForm.value.wallet_model = ''
+  }
+  
+  if (editForm.value.wallet_network && (editForm.value.wallet_network === 'BEP20' || editForm.value.wallet_network === 'ERC20')) {
+    loadEditWalletAddressByNetwork(editForm.value.wallet_network)
+  }
+}
+
+// Handle network change
+const onNetworkChange = () => {
+  adminWalletAddress.value = ''
+  // Auto-fill wallet_model based on network
+  if (createForm.value.wallet_network === 'BEP20') {
+    createForm.value.wallet_model = 'USDT_BEP20'
+  } else if (createForm.value.wallet_network === 'ERC20') {
+    createForm.value.wallet_model = 'USDT_ERC20'
+  } else {
+    createForm.value.wallet_model = ''
+  }
+  
+  if (createForm.value.wallet_network && (createForm.value.wallet_network === 'BEP20' || createForm.value.wallet_network === 'ERC20')) {
+    loadWalletAddressByNetwork(createForm.value.wallet_network)
   }
 }
 
@@ -1403,107 +1482,48 @@ watch(() => createForm.value.amount, () => {
   calculateCoinPreview()
 })
 
-watch(() => createForm.value.member_id, () => {
-  onMemberChange()
+watch(() => createForm.value.withdraw_type, () => {
+  calculateCoinPreview()
 })
 
 // Create Modal
-const openCreateModal = async () => {
+const openCreateModal = () => {
   createForm.value = {
     member_id: '',
-    network: '',
+    withdraw_type: 'balance',
     amount: '',
-    coin_amount: '',
-    conversion_rate: '',
-    from_wallet_address: '', // Manual input - tidak diisi otomatis
-    to_wallet_address: '',
-    payment_method: '',
-    wallet_model: '',
+    wallet_address: '',
+    wallet_network: 'BEP20',
+    wallet_model: 'USDT_BEP20',
+    notes: '',
     status: 'pending'
   }
   createError.value = ''
   selectedMemberInfo.value = null
   coinPreview.value = 0
-  conversionRate.value = 2.0
   adminWalletAddress.value = ''
-  
   showCreateModal.value = true
-  
-  // Tidak perlu load wallet admin di awal, tunggu user pilih network dulu
-}
-
-// Load random wallet admin from database (for refresh button)
-const loadRandomWalletAdmin = async () => {
-  const network = createForm.value.network || 'BEP20'
-  await loadWalletAddressByNetwork(network)
-}
-
-// Select network for edit form
-const selectEditNetwork = async (network) => {
-  editForm.value.network = network
-  editForm.value.wallet_model = `USDT_${network}`
-  editForm.value.payment_method = `USDT_${network}`
-  
-  // Load wallet admin from database based on selected network
-  await loadEditWalletAddressByNetwork(network)
-}
-
-// Load wallet address for edit form based on network
-const loadEditWalletAddressByNetwork = async (network) => {
-  if (!network) {
-    editAdminWalletAddress.value = ''
-    editForm.value.to_wallet_address = ''
-    return
+  // Load wallet admin when modal opens if network is already set
+  if (createForm.value.wallet_network && (createForm.value.wallet_network === 'BEP20' || createForm.value.wallet_network === 'ERC20')) {
+    loadWalletAddressByNetwork(createForm.value.wallet_network)
   }
-
-  isLoadingEditWallet.value = true
-  try {
-    const response = await $fetch('/api/admin/wallet-addresses', {
-      params: { network }
-    })
-
-    if (response.success && response.data && response.data.length > 0) {
-      // Get random wallet address from available wallets
-      const randomIndex = Math.floor(Math.random() * response.data.length)
-      editAdminWalletAddress.value = response.data[randomIndex].address || ''
-      editForm.value.to_wallet_address = editAdminWalletAddress.value
-    } else {
-      editAdminWalletAddress.value = ''
-      editForm.value.to_wallet_address = ''
-    }
-  } catch (error) {
-    console.error('Failed to load wallet address:', error)
-    editAdminWalletAddress.value = ''
-    editForm.value.to_wallet_address = ''
-  } finally {
-    isLoadingEditWallet.value = false
-  }
-}
-
-// Load random wallet admin for edit form (for refresh button)
-const loadRandomEditWalletAdmin = async () => {
-  const network = editForm.value.network || 'BEP20'
-  await loadEditWalletAddressByNetwork(network)
 }
 
 const closeCreateModal = () => {
   showCreateModal.value = false
   createForm.value = {
     member_id: '',
-    network: '',
+    withdraw_type: 'balance',
     amount: '',
-    coin_amount: '',
-    conversion_rate: '',
-    from_wallet_address: '',
-    to_wallet_address: '',
-    payment_method: '',
-    wallet_model: '',
+    wallet_address: '',
+    wallet_network: 'BEP20',
+    wallet_model: 'USDT_BEP20',
+    notes: '',
     status: 'pending'
   }
   createError.value = ''
   selectedMemberInfo.value = null
   coinPreview.value = 0
-  conversionRate.value = 2.0
   adminWalletAddress.value = ''
 }
 
@@ -1512,79 +1532,68 @@ const handleCreate = async () => {
   createError.value = ''
 
   try {
-    const response = await $fetch('/api/admin/deposits', {
+    const response = await $fetch('/api/admin/withdraws', {
       method: 'POST',
       body: {
         member_id: createForm.value.member_id,
+        withdraw_type: createForm.value.withdraw_type,
         amount: createForm.value.amount,
-        coin_amount: createForm.value.coin_amount || undefined,
-        conversion_rate: createForm.value.conversion_rate || undefined,
-        from_wallet_address: createForm.value.from_wallet_address,
-        to_wallet_address: createForm.value.to_wallet_address,
-        payment_method: createForm.value.payment_method,
+        wallet_address: createForm.value.wallet_address,
+        wallet_network: createForm.value.wallet_network,
         wallet_model: createForm.value.wallet_model || undefined,
+        admin_wallet_address: adminWalletAddress.value || undefined,
+        notes: createForm.value.notes || undefined,
         status: createForm.value.status
       }
     })
 
     if (response.success) {
       closeCreateModal()
-      await fetchDeposits()
+      await fetchWithdraws()
     } else {
-      createError.value = response.message || 'Gagal membuat deposit'
+      createError.value = response.message || 'Gagal membuat withdraw'
     }
   } catch (error) {
-    console.error('Error creating deposit:', error)
-    createError.value = error?.data?.message || error?.message || 'Gagal membuat deposit'
+    console.error('Error creating withdraw:', error)
+    createError.value = error?.data?.message || error?.message || 'Gagal membuat withdraw'
   } finally {
     isCreating.value = false
   }
 }
 
 // Edit Modal
-const openEditModal = async (deposit) => {
-  // Extract network from payment_method or wallet_model
-  let network = ''
-  if (deposit.payment_method) {
-    if (deposit.payment_method.includes('BEP20')) {
-      network = 'BEP20'
-    } else if (deposit.payment_method.includes('ERC20')) {
-      network = 'ERC20'
+const openEditModal = (withdraw) => {
+  const network = withdraw.wallet_network || 'BEP20'
+  // Auto-fill wallet_model based on network
+  let walletModel = withdraw.wallet_model || ''
+  if (!walletModel) {
+    if (network === 'BEP20') {
+      walletModel = 'USDT_BEP20'
+    } else if (network === 'ERC20') {
+      walletModel = 'USDT_ERC20'
     }
-  } else if (deposit.wallet_model) {
-    if (deposit.wallet_model.includes('BEP20')) {
-      network = 'BEP20'
-    } else if (deposit.wallet_model.includes('ERC20')) {
-      network = 'ERC20'
-    }
-  }
-  
-  // If no network found, default to BEP20
-  if (!network) {
-    network = 'BEP20'
   }
   
   editForm.value = {
-    id: deposit.id,
-    member_id: deposit.member_id,
-    member_email: deposit.members?.email || 'N/A',
-    amount: deposit.amount?.toString() || '',
-    coin_amount: deposit.coin_amount?.toString() || '',
-    conversion_rate: deposit.conversion_rate?.toString() || '',
-    network: network,
-    from_wallet_address: deposit.from_wallet_address || '',
-    to_wallet_address: deposit.to_wallet_address || '',
-    payment_method: deposit.payment_method || `USDT_${network}`,
-    wallet_model: deposit.wallet_model || `USDT_${network}`,
-    status: deposit.status || 'pending'
+    id: withdraw.id,
+    member_id: withdraw.member_id,
+    member_email: withdraw.members?.email || 'N/A',
+    withdraw_type: withdraw.withdraw_type || 'balance',
+    amount: withdraw.amount?.toString() || '',
+    wallet_address: withdraw.wallet_address || '',
+    wallet_network: network,
+    wallet_model: walletModel,
+    hash: withdraw.hash || '',
+    notes: withdraw.notes || '',
+    status: withdraw.status || 'pending'
   }
   updateError.value = ''
-  editAdminWalletAddress.value = ''
+  // Pre-fill admin_wallet_address if it exists, otherwise load from database
+  editAdminWalletAddress.value = withdraw.admin_wallet_address || ''
   showEditModal.value = true
-  
-  // Load wallet admin if network is BEP20 or ERC20
-  if (network === 'BEP20' || network === 'ERC20') {
-    await loadEditWalletAddressByNetwork(network)
+  // Load wallet admin when modal opens if network is BEP20 or ERC20 and no existing admin wallet
+  if (!editAdminWalletAddress.value && editForm.value.wallet_network && (editForm.value.wallet_network === 'BEP20' || editForm.value.wallet_network === 'ERC20')) {
+    loadEditWalletAddressByNetwork(editForm.value.wallet_network)
   }
 }
 
@@ -1594,14 +1603,13 @@ const closeEditModal = () => {
     id: '',
     member_id: '',
     member_email: '',
+    withdraw_type: 'balance',
     amount: '',
-    coin_amount: '',
-    conversion_rate: '',
-    network: '',
-    from_wallet_address: '',
-    to_wallet_address: '',
-    payment_method: '',
-    wallet_model: '',
+    wallet_address: '',
+    wallet_network: 'BEP20',
+    wallet_model: 'USDT_BEP20',
+    hash: '',
+    notes: '',
     status: 'pending'
   }
   updateError.value = ''
@@ -1613,67 +1621,68 @@ const handleUpdate = async () => {
   updateError.value = ''
 
   try {
-    const response = await $fetch(`/api/admin/deposits/${editForm.value.id}`, {
+    const response = await $fetch(`/api/admin/withdraws/${editForm.value.id}`, {
       method: 'PUT',
       body: {
+        withdraw_type: editForm.value.withdraw_type,
         amount: editForm.value.amount,
-        coin_amount: editForm.value.coin_amount || undefined,
-        conversion_rate: editForm.value.conversion_rate || undefined,
-        from_wallet_address: editForm.value.from_wallet_address,
-        to_wallet_address: editForm.value.to_wallet_address,
-        payment_method: editForm.value.payment_method,
+        wallet_address: editForm.value.wallet_address,
+        wallet_network: editForm.value.wallet_network,
         wallet_model: editForm.value.wallet_model || undefined,
+        admin_wallet_address: editAdminWalletAddress.value || undefined,
+        hash: editForm.value.hash || undefined,
+        notes: editForm.value.notes || undefined,
         status: editForm.value.status
       }
     })
 
     if (response.success) {
       closeEditModal()
-      await fetchDeposits()
+      await fetchWithdraws()
     } else {
-      updateError.value = response.message || 'Gagal mengupdate deposit'
+      updateError.value = response.message || 'Gagal mengupdate withdraw'
     }
   } catch (error) {
-    console.error('Error updating deposit:', error)
-    updateError.value = error?.data?.message || error?.message || 'Gagal mengupdate deposit'
+    console.error('Error updating withdraw:', error)
+    updateError.value = error?.data?.message || error?.message || 'Gagal mengupdate withdraw'
   } finally {
     isUpdating.value = false
   }
 }
 
 // Delete Modal
-const confirmDelete = (deposit) => {
-  depositToDelete.value = deposit
+const confirmDelete = (withdraw) => {
+  withdrawToDelete.value = withdraw
   deleteError.value = ''
   showDeleteModal.value = true
 }
 
 const closeDeleteModal = () => {
   showDeleteModal.value = false
-  depositToDelete.value = null
+  withdrawToDelete.value = null
   deleteError.value = ''
 }
 
 const handleDelete = async () => {
-  if (!depositToDelete.value) return
+  if (!withdrawToDelete.value) return
 
   isDeleting.value = true
   deleteError.value = ''
 
   try {
-    const response = await $fetch(`/api/admin/deposits/${depositToDelete.value.id}`, {
+    const response = await $fetch(`/api/admin/withdraws/${withdrawToDelete.value.id}`, {
       method: 'DELETE'
     })
 
     if (response.success) {
       closeDeleteModal()
-      await fetchDeposits()
+      await fetchWithdraws()
     } else {
-      deleteError.value = response.message || 'Gagal menghapus deposit'
+      deleteError.value = response.message || 'Gagal menghapus withdraw'
     }
   } catch (error) {
-    console.error('Error deleting deposit:', error)
-    deleteError.value = error?.data?.message || error?.message || 'Gagal menghapus deposit'
+    console.error('Error deleting withdraw:', error)
+    deleteError.value = error?.data?.message || error?.message || 'Gagal menghapus withdraw'
   } finally {
     isDeleting.value = false
   }
@@ -1681,7 +1690,7 @@ const handleDelete = async () => {
 
 // Fetch on mount
 onMounted(() => {
-  fetchDeposits()
+  fetchWithdraws()
   fetchMembers()
   fetchCoinSettings()
 })

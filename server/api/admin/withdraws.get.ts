@@ -1,6 +1,6 @@
 /**
- * Get all deposits for admin (with transaction hash and all details)
- * GET /api/admin/deposits
+ * Get all withdraws for admin (with member details)
+ * GET /api/admin/withdraws
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -27,14 +27,15 @@ export default defineEventHandler(async (event) => {
     // Get query parameters
     const query = getQuery(event)
     const status = query.status as string | undefined
+    const withdraw_type = query.withdraw_type as string | undefined
     const search = query.search as string | undefined
     const limit = parseInt(query.limit as string) || 50
     const offset = parseInt(query.offset as string) || 0
 
-    let deposits = []
+    let withdraws = []
     let totalCount = 0
 
-    // If search is provided, combine results from deposits fields and member search
+    // If search is provided, combine results from withdraws fields and member search
     if (search && search.trim()) {
       const searchTerm = search.trim()
       
@@ -46,24 +47,28 @@ export default defineEventHandler(async (event) => {
       
       const matchingMemberIds = matchingMembers?.map(m => m.id) || []
       
-      // 2. Query deposits by fields (wallet addresses, payment method, etc)
+      // 2. Query withdraws by fields (wallet address, network, etc)
       let fieldQueryBuilder = supabase
-        .from('deposits')
+        .from('withdraws')
         .select('*')
         .order('created_at', { ascending: false })
-        .or(`from_wallet_address.ilike.%${searchTerm}%,to_wallet_address.ilike.%${searchTerm}%,payment_method.ilike.%${searchTerm}%,wallet_model.ilike.%${searchTerm}%`)
+        .or(`wallet_address.ilike.%${searchTerm}%,wallet_network.ilike.%${searchTerm}%,wallet_model.ilike.%${searchTerm}%,hash.ilike.%${searchTerm}%`)
       
       if (status && ['pending', 'completed', 'rejected'].includes(status)) {
         fieldQueryBuilder = fieldQueryBuilder.eq('status', status)
       }
       
-      const { data: depositsFromFields } = await fieldQueryBuilder
+      if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+        fieldQueryBuilder = fieldQueryBuilder.eq('withdraw_type', withdraw_type)
+      }
       
-      // 3. Query deposits by member IDs
-      let depositsFromMembers = []
+      const { data: withdrawsFromFields } = await fieldQueryBuilder
+      
+      // 3. Query withdraws by member IDs
+      let withdrawsFromMembers = []
       if (matchingMemberIds.length > 0) {
         let memberQueryBuilder = supabase
-          .from('deposits')
+          .from('withdraws')
           .select('*')
           .order('created_at', { ascending: false })
           .in('member_id', matchingMemberIds)
@@ -72,28 +77,32 @@ export default defineEventHandler(async (event) => {
           memberQueryBuilder = memberQueryBuilder.eq('status', status)
         }
         
-        const { data: memberDeposits } = await memberQueryBuilder
-        depositsFromMembers = memberDeposits || []
+        if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+          memberQueryBuilder = memberQueryBuilder.eq('withdraw_type', withdraw_type)
+        }
+        
+        const { data: memberWithdraws } = await memberQueryBuilder
+        withdrawsFromMembers = memberWithdraws || []
       }
       
       // 4. Combine and deduplicate
-      const allDepositsMap = new Map()
-      ;[...(depositsFromFields || []), ...depositsFromMembers].forEach(deposit => {
-        if (!allDepositsMap.has(deposit.id)) {
-          allDepositsMap.set(deposit.id, deposit)
+      const allWithdrawsMap = new Map()
+      ;[...(withdrawsFromFields || []), ...withdrawsFromMembers].forEach(withdraw => {
+        if (!allWithdrawsMap.has(withdraw.id)) {
+          allWithdrawsMap.set(withdraw.id, withdraw)
         }
       })
       
-      deposits = Array.from(allDepositsMap.values())
-      deposits.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      totalCount = deposits.length
+      withdraws = Array.from(allWithdrawsMap.values())
+      withdraws.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      totalCount = withdraws.length
       
       // Apply pagination
-      deposits = deposits.slice(offset, offset + limit)
+      withdraws = withdraws.slice(offset, offset + limit)
     } else {
       // No search - normal query
       let queryBuilder = supabase
-        .from('deposits')
+        .from('withdraws')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
@@ -102,25 +111,29 @@ export default defineEventHandler(async (event) => {
         queryBuilder = queryBuilder.eq('status', status)
       }
 
-      const { data: normalDeposits, error, count } = await queryBuilder
+      if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+        queryBuilder = queryBuilder.eq('withdraw_type', withdraw_type)
+      }
+
+      const { data: normalWithdraws, error, count } = await queryBuilder
       
       if (error) {
         console.error('Supabase query error:', error)
         throw createError({
           statusCode: 500,
-          statusMessage: error.message || 'Failed to fetch deposits'
+          statusMessage: error.message || 'Failed to fetch withdraws'
         })
       }
       
-      deposits = normalDeposits || []
+      withdraws = normalWithdraws || []
       totalCount = count || 0
     }
 
-    console.log('Raw deposits from Supabase:', deposits?.length || 0, 'items')
+    console.log('Raw withdraws from Supabase:', withdraws?.length || 0, 'items')
     console.log('Total count:', totalCount)
 
     // Fetch members separately and merge
-    const memberIds = [...new Set((deposits || []).map(d => d.member_id).filter(Boolean))]
+    const memberIds = [...new Set((withdraws || []).map(w => w.member_id).filter(Boolean))]
     let membersMap = {}
     
     console.log('Unique member IDs:', memberIds.length)
@@ -142,17 +155,17 @@ export default defineEventHandler(async (event) => {
       }
     }
     
-    // Merge deposits with members data
-    const depositsWithMembers = (deposits || []).map(deposit => ({
-      ...deposit,
-      members: membersMap[deposit.member_id] || null
+    // Merge withdraws with members data
+    const withdrawsWithMembers = (withdraws || []).map(withdraw => ({
+      ...withdraw,
+      members: membersMap[withdraw.member_id] || null
     }))
 
-    console.log('Final deposits with members:', depositsWithMembers.length)
+    console.log('Final withdraws with members:', withdrawsWithMembers.length)
 
     return {
       success: true,
-      data: depositsWithMembers,
+      data: withdrawsWithMembers,
       count: totalCount || 0,
       limit,
       offset
@@ -164,7 +177,8 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: err?.message || 'Failed to fetch deposits'
+      statusMessage: err?.message || 'Failed to fetch withdraws'
     })
   }
 })
+

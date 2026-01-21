@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.withdraws (
   wallet_address VARCHAR(255) NOT NULL,
   wallet_network VARCHAR(50) NOT NULL,
   wallet_model VARCHAR(100),
+  admin_wallet_address VARCHAR(255) NULL,
   hash VARCHAR(255) NULL,
   notes TEXT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
@@ -38,6 +39,7 @@ COMMENT ON COLUMN public.withdraws.amount IS 'Jumlah withdraw dalam USDT';
 COMMENT ON COLUMN public.withdraws.wallet_address IS 'Alamat wallet tujuan untuk menerima withdraw';
 COMMENT ON COLUMN public.withdraws.wallet_network IS 'Network wallet: BEP20, ERC20, dll';
 COMMENT ON COLUMN public.withdraws.wallet_model IS 'Model wallet: USDT_BEP20, USDT_ERC20, dll';
+COMMENT ON COLUMN public.withdraws.admin_wallet_address IS 'Alamat wallet admin yang digunakan untuk proses withdraw';
 COMMENT ON COLUMN public.withdraws.hash IS 'Transaction hash dari blockchain (muncul setelah admin approve)';
 COMMENT ON COLUMN public.withdraws.notes IS 'Catatan tambahan (opsional)';
 COMMENT ON COLUMN public.withdraws.status IS 'Status withdraw: pending, completed, rejected';

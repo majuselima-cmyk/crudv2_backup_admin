@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS public.bonus_settings (
   
   -- Bonus Aktif
   referral_percentage DECIMAL(5,2) NOT NULL DEFAULT 15.00,
+  referral_balance_percentage DECIMAL(5,2) NOT NULL DEFAULT 80.00,
+  referral_coin_percentage DECIMAL(5,2) NOT NULL DEFAULT 20.00,
   matching_level1_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
   matching_level2_percentage DECIMAL(5,2) NOT NULL DEFAULT 5.00,
   matching_level3_percentage DECIMAL(5,2) NOT NULL DEFAULT 2.00,
@@ -29,6 +31,8 @@ CREATE TABLE IF NOT EXISTS public.bonus_settings (
 -- Insert default settings (hanya sekali)
 INSERT INTO public.bonus_settings (
   referral_percentage,
+  referral_balance_percentage,
+  referral_coin_percentage,
   matching_level1_percentage,
   matching_level2_percentage,
   matching_level3_percentage,
@@ -40,6 +44,8 @@ INSERT INTO public.bonus_settings (
   is_active
 ) VALUES (
   15.00,  -- referral
+  80.00,  -- referral balance percentage (80% ke balance USDT)
+  20.00,  -- referral coin percentage (20% ke coin)
   10.00,  -- matching level 1
   5.00,   -- matching level 2
   2.00,   -- matching level 3

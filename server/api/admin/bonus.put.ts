@@ -1,7 +1,7 @@
 /**
  * Update bonus settings
  * PUT /api/admin/bonus
- * Body: { referral_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, multiplier_percentage, is_active }
+ * Body: { referral_percentage, referral_balance_percentage, referral_coin_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, multiplier_percentage, is_active }
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const {
       referral_percentage,
+      referral_balance_percentage,
+      referral_coin_percentage,
       matching_level1_percentage,
       matching_level2_percentage,
       matching_level3_percentage,
@@ -24,6 +26,8 @@ export default defineEventHandler(async (event) => {
     // Validate required fields
     if (
       referral_percentage === undefined ||
+      referral_balance_percentage === undefined ||
+      referral_coin_percentage === undefined ||
       matching_level1_percentage === undefined ||
       matching_level2_percentage === undefined ||
       matching_level3_percentage === undefined ||
@@ -37,6 +41,17 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: 'Semua field wajib diisi'
+      })
+    }
+
+    // Validate referral split ratio (must total 100%)
+    const balancePct = parseFloat(referral_balance_percentage) || 0
+    const coinPct = parseFloat(referral_coin_percentage) || 0
+    const totalSplit = balancePct + coinPct
+    if (Math.abs(totalSplit - 100) > 0.01) { // Allow small floating point error
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Referral split ratio harus total 100% (Balance: ${balancePct}%, Coin: ${coinPct}%)`
       })
     }
 
@@ -104,6 +119,8 @@ export default defineEventHandler(async (event) => {
         .from('bonus_settings')
         .update({
           referral_percentage: parseFloat(referral_percentage),
+          referral_balance_percentage: parseFloat(referral_balance_percentage),
+          referral_coin_percentage: parseFloat(referral_coin_percentage),
           matching_level1_percentage: parseFloat(matching_level1_percentage),
           matching_level2_percentage: parseFloat(matching_level2_percentage),
           matching_level3_percentage: parseFloat(matching_level3_percentage),
@@ -132,6 +149,8 @@ export default defineEventHandler(async (event) => {
         .from('bonus_settings')
         .insert({
           referral_percentage: parseFloat(referral_percentage),
+          referral_balance_percentage: parseFloat(referral_balance_percentage),
+          referral_coin_percentage: parseFloat(referral_coin_percentage),
           matching_level1_percentage: parseFloat(matching_level1_percentage),
           matching_level2_percentage: parseFloat(matching_level2_percentage),
           matching_level3_percentage: parseFloat(matching_level3_percentage),

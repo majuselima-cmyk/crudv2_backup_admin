@@ -136,6 +136,11 @@ const menuItems = computed(() => [
     icon: 'document'
   },
   {
+    path: '/dashboard/withdraws',
+    label: 'Rekap Withdraw',
+    icon: 'document'
+  },
+  {
     path: '/dashboard/settings',
     label: 'Pengaturan',
     icon: 'settings'

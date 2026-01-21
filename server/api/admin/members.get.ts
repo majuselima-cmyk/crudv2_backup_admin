@@ -175,11 +175,63 @@ export default defineEventHandler(async (event) => {
           console.error(`❌ Error fetching deposits for member ${member.id}:`, depositsError)
         }
         
+        // Calculate total withdraws (completed + pending, exclude rejected)
+        let totalWithdraw = 0
+        const memberIdStr = String(member.id || '')
+        const { data: allWithdraws, error: withdrawsError } = await supabase
+          .from('withdraws')
+          .select('id, member_id, amount, status')
+        
+        if (!withdrawsError && allWithdraws) {
+          // Filter by member_id and status (completed or pending, exclude rejected)
+          const validWithdraws = allWithdraws.filter(withdraw => {
+            const withdrawMemberId = String(withdraw.member_id || '')
+            const matches = withdrawMemberId === memberIdStr || 
+                           withdrawMemberId === member.id ||
+                           withdraw.member_id === member.id
+            if (!matches) return false
+            
+            const status = String(withdraw.status || '').toLowerCase().trim()
+            return status === 'completed' || status === 'pending'
+          })
+          
+          totalWithdraw = validWithdraws.reduce((sum, withdraw) => {
+            const amount = parseFloat(withdraw.amount) || 0
+            return sum + amount
+          }, 0)
+        }
+        
+        // Calculate remaining balance (deposit - withdraw)
+        const remainingBalance = Math.max(0, totalBalance - totalWithdraw)
+        
+        // Get coin settings to convert balance to coin
+        let coinBalance = 0
+        const { data: coinSettings } = await supabase
+          .from('coin_settings')
+          .select('normal_price_usdt, vip_price_usdt, leader_price_usdt')
+          .single()
+        
+        if (coinSettings && remainingBalance > 0) {
+          let pricePerCoin = parseFloat(coinSettings.normal_price_usdt) || 0.5
+          if (member.member_type === 'vip' && coinSettings.vip_price_usdt) {
+            pricePerCoin = parseFloat(coinSettings.vip_price_usdt)
+          } else if (member.member_type === 'leader' && coinSettings.leader_price_usdt) {
+            pricePerCoin = parseFloat(coinSettings.leader_price_usdt)
+          }
+          
+          if (pricePerCoin > 0) {
+            coinBalance = remainingBalance / pricePerCoin
+          }
+        }
+        
         return {
           ...member,
           total_downline: downlineCount || 0,
-          total_balance: totalBalance,
-          total_coin_from_deposits: totalCoinFromDeposits
+          total_balance: totalBalance, // Total deposit completed
+          total_withdraw: totalWithdraw, // Total withdraw (completed + pending)
+          remaining_balance: remainingBalance, // Total deposit - Total withdraw
+          total_coin_from_deposits: totalCoinFromDeposits,
+          coin_balance: coinBalance // Remaining balance converted to coin
         }
       })
     )

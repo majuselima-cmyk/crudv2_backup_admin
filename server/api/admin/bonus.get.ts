@@ -45,6 +45,8 @@ export default defineEventHandler(async (event) => {
         success: true,
         data: {
           referral_percentage: 15.00,
+          referral_balance_percentage: 80.00,
+          referral_coin_percentage: 20.00,
           matching_level1_percentage: 10.00,
           matching_level2_percentage: 5.00,
           matching_level3_percentage: 2.00,
