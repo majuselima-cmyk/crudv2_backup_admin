@@ -64,12 +64,26 @@
 
               <div>
                 <label class="block text-sm font-medium mb-2 text-gray-700">Kata Sandi Baru</label>
-                <input
-                  type="password"
-                  v-model="profile.password"
-                  class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  placeholder="Kosongkan jika tidak ingin mengubah password"
-                />
+                <div class="relative">
+                  <input
+                    :type="showPassword ? 'text' : 'password'"
+                    v-model="profile.password"
+                    class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                    placeholder="Kosongkan jika tidak ingin mengubah password"
+                  />
+                  <button
+                    type="button"
+                    @click="showPassword = !showPassword"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                    tabindex="-1"
+                  >
+                    <Icon 
+                      :name="showPassword ? 'eye-slash' : 'eye'" 
+                      size="md" 
+                      class="text-gray-500"
+                    />
+                  </button>
+                </div>
                 <p class="mt-1 text-xs text-gray-500">Minimal 6 karakter. Kosongkan jika tidak ingin mengubah password.</p>
               </div>
 
@@ -130,6 +144,7 @@ definePageMeta({
 const isMobileMenuOpen = ref(false)
 const isLoading = ref(false)
 const isSaving = ref(false)
+const showPassword = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 

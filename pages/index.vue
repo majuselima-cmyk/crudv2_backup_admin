@@ -28,13 +28,27 @@
           
           <div>
             <label class="block text-sm font-medium mb-2 text-gray-700">Kata Sandi</label>
-            <input
-              type="password"
-              v-model="password"
-              class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition"
-              placeholder="Kata Sandi"
-              required
-            />
+            <div class="relative">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="password"
+                class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition"
+                placeholder="Kata Sandi"
+                required
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                tabindex="-1"
+              >
+                <Icon 
+                  :name="showPassword ? 'eye-slash' : 'eye'" 
+                  size="md" 
+                  class="text-gray-500"
+                />
+              </button>
+            </div>
           </div>
           
           <div class="flex items-center">
@@ -91,6 +105,7 @@ definePageMeta({
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 const connectionTest = ref(null)

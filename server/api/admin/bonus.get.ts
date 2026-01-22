@@ -32,10 +32,35 @@ export default defineEventHandler(async (event) => {
       .limit(1)
       .single()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    if (error) {
+      // Log error untuk debugging
+      console.error('Bonus settings error:', error)
+      
+      // Jika error karena tidak ada row, return default
+      if (error.code === 'PGRST116') {
+        return {
+          success: true,
+          data: {
+            referral_percentage: 15.00,
+            referral_balance_percentage: 80.00,
+            referral_coin_percentage: 20.00,
+            matching_level1_percentage: 10.00,
+            matching_level2_percentage: 5.00,
+            matching_level3_percentage: 2.00,
+            loyalty_percentage: 10.00,
+            reward_percentage: 0.50,
+            multiplier_percentage: 10.00,
+            multiplier_increment_percentage: 10.00,
+            multiplier_increment_days: 7,
+            is_active: true
+          }
+        }
+      }
+      
+      // Error lain, throw
       throw createError({
         statusCode: 500,
-        statusMessage: error.message || 'Gagal mengambil pengaturan bonus'
+        statusMessage: `Gagal mengambil pengaturan bonus: ${error.message}`
       })
     }
 

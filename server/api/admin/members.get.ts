@@ -5,7 +5,6 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
-  console.log('🔵 [MEMBERS API] Starting to fetch members...')
   try {
     const config = useRuntimeConfig()
     const supabaseUrl = config.public?.supabaseUrl || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -74,8 +73,9 @@ export default defineEventHandler(async (event) => {
         // Calculate total deposit amount (completed deposits only)
         // Get ALL deposits first, then filter by member_id and status
         // This ensures we catch all deposits regardless of type mismatches
-        let completedDeposits = []
-        let allMemberDeposits = []
+        type DepositRow = { id: string; member_id: string; amount: number | string; coin_amount?: number | string; status: string }
+        let completedDeposits: DepositRow[] = []
+        let allMemberDeposits: DepositRow[] = []
         let depositsError = null
         
         // Get ALL deposits from database (we'll filter in JavaScript)
@@ -87,8 +87,6 @@ export default defineEventHandler(async (event) => {
           depositsError = allDepositsError
           console.error(`Error fetching all deposits:`, allDepositsError)
         } else if (allDeposits) {
-          console.log(`Total deposits in database: ${allDeposits.length}`)
-          
           // Filter by member_id (handle type conversion - UUID vs string)
           const memberIdStr = String(member.id || '')
           allMemberDeposits = allDeposits.filter(deposit => {
@@ -99,30 +97,10 @@ export default defineEventHandler(async (event) => {
             return matches
           })
           
-          console.log(`Member ${member.id} (${member.email}): Found ${allMemberDeposits.length} total deposits`)
-          if (allMemberDeposits.length > 0) {
-            console.log(`  All deposits for member:`, allMemberDeposits.map(d => ({
-              id: d.id,
-              member_id: d.member_id,
-              status: d.status,
-              amount: d.amount,
-              coin_amount: d.coin_amount
-            })))
-          }
-          
           // Filter by completed status (case insensitive, handle both "completed" and "selesai")
           completedDeposits = allMemberDeposits.filter(deposit => {
             const status = String(deposit.status || '').toLowerCase().trim()
-            const isCompleted = status === 'completed' || status === 'selesai'
-            if (isCompleted) {
-              console.log(`  Found completed deposit:`, {
-                id: deposit.id,
-                status: deposit.status,
-                amount: deposit.amount,
-                coin_amount: deposit.coin_amount
-              })
-            }
-            return isCompleted
+            return status === 'completed' || status === 'selesai'
           })
         }
         
@@ -136,43 +114,17 @@ export default defineEventHandler(async (event) => {
         if (!depositsError) {
           if (completedDeposits && completedDeposits.length > 0) {
             totalBalance = completedDeposits.reduce((sum, deposit) => {
-              const amount = parseFloat(deposit.amount) || 0
+              const amount = parseFloat(String(deposit.amount || 0)) || 0
               return sum + amount
             }, 0)
             
             totalCoinFromDeposits = completedDeposits.reduce((sum, deposit) => {
-              const coinAmount = parseFloat(deposit.coin_amount) || 0
+              const coinAmount = parseFloat(String(deposit.coin_amount || 0)) || 0
               return sum + coinAmount
             }, 0)
-            
-            console.log(`✅ Member ${member.id} (${member.email}): ${completedDeposits.length} completed deposits`)
-            console.log(`  Deposits:`, completedDeposits.map(d => ({ 
-              id: d.id, 
-              amount: d.amount, 
-              coin_amount: d.coin_amount,
-              status: d.status,
-              member_id: d.member_id 
-            })))
-            console.log(`  Total Balance: ${totalBalance}, Total Coin: ${totalCoinFromDeposits}`)
-          } else {
-            // Debug: Check all deposits for this member
-            if (allMemberDeposits && allMemberDeposits.length > 0) {
-              console.log(`⚠️ Member ${member.id} (${member.email}): Found ${allMemberDeposits.length} deposits but none are completed`)
-              console.log(`  Deposit statuses:`, allMemberDeposits.map(d => ({ 
-                id: d.id, 
-                status: d.status, 
-                amount: d.amount,
-                member_id: d.member_id,
-                member_id_type: typeof d.member_id,
-                member_id_str: String(d.member_id)
-              })))
-              console.log(`  Member ID being searched: ${member.id} (type: ${typeof member.id})`)
-            } else {
-              console.log(`❌ Member ${member.id} (${member.email}): No deposits found at all`)
-            }
           }
         } else if (depositsError) {
-          console.error(`❌ Error fetching deposits for member ${member.id}:`, depositsError)
+          console.error(`Error fetching deposits for member ${member.id}:`, depositsError)
         }
         
         // Calculate total withdraws (completed + pending, exclude rejected)
@@ -201,10 +153,12 @@ export default defineEventHandler(async (event) => {
           }, 0)
         }
         
-        // Calculate remaining balance (deposit - withdraw)
+        // Rumus: Total Balance USDT = deposit (completed) - withdraw (pending + completed)
+        // Rejected withdraw TIDAK dihitung. Bonus referral (80% ke balance) sudah termasuk
+        // di total deposit via deposit dengan payment_method = 'referral_bonus'.
         const remainingBalance = Math.max(0, totalBalance - totalWithdraw)
         
-        // Get coin settings to convert balance to coin
+        // Saldo Coin = Total Balance USDT / harga coin (berdasarkan member_type: normal/leader/vip)
         let coinBalance = 0
         const { data: coinSettings } = await supabase
           .from('coin_settings')
@@ -227,17 +181,15 @@ export default defineEventHandler(async (event) => {
         return {
           ...member,
           total_downline: downlineCount || 0,
-          total_balance: totalBalance, // Total deposit completed
-          total_withdraw: totalWithdraw, // Total withdraw (completed + pending)
-          remaining_balance: remainingBalance, // Total deposit - Total withdraw
+          total_balance: totalBalance, // Total deposit completed (termasuk bonus referral)
+          total_withdraw: totalWithdraw, // Total withdraw (completed + pending, exclude rejected)
+          remaining_balance: remainingBalance, // Balance USDT = deposit - withdraw
           total_coin_from_deposits: totalCoinFromDeposits,
-          coin_balance: coinBalance // Remaining balance converted to coin
+          coin_balance: coinBalance // Saldo Coin = remaining_balance / price (by member_type)
         }
       })
     )
 
-    console.log(`🔵 [MEMBERS API] Returning ${membersWithStats?.length || 0} members`)
-    
     return {
       success: true,
       data: membersWithStats || [],

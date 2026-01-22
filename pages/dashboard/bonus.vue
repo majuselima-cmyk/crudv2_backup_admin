@@ -252,7 +252,7 @@
                   />
                   <span class="text-gray-600 font-medium">%</span>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Additional multiplier bonus percentage</p>
+                <p class="text-xs text-gray-500 mt-1">Additional multiplier bonus percentage per hari</p>
               </div>
 
               <!-- Multiplier Increment Days -->

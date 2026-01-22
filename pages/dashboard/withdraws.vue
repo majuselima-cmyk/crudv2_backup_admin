@@ -110,6 +110,7 @@
             <table class="w-full">
               <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">No</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member ID</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
@@ -126,15 +127,18 @@
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-if="withdraws.length === 0" class="hover:bg-gray-50">
-                  <td colspan="12" class="px-6 py-12 text-center text-sm text-gray-500">
+                  <td colspan="13" class="px-6 py-12 text-center text-sm text-gray-500">
                     Belum ada data withdraw
                   </td>
                 </tr>
                 <tr
-                  v-for="withdraw in withdraws"
+                  v-for="(withdraw, index) in withdraws"
                   :key="withdraw.id"
                   class="hover:bg-gray-50 transition-colors"
                 >
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                    {{ index + 1 }}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {{ formatDate(withdraw.created_at) }}
                   </td>
@@ -420,17 +424,12 @@
         <form @submit.prevent="handleCreate" class="p-6 space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Member *</label>
-            <select
+            <MemberSelect
               v-model="createForm.member_id"
-              @change="onMemberChange"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-            >
-              <option value="">Pilih Member</option>
-              <option v-for="member in members" :key="member.id" :value="member.id">
-                {{ member.username }} ({{ member.email }}) - {{ formatMemberType(member.member_type) }}
-              </option>
-            </select>
+              :members="members"
+              @select="onMemberChange"
+              placeholder="Cari member (nama, email, jenis member)..."
+            />
             <div v-if="selectedMemberInfo" class="mt-2 p-3 rounded-lg" :class="getMemberTypeClass(selectedMemberInfo.member_type)">
               <p class="text-sm font-medium">
                 Jenis Member: <span class="font-semibold">{{ formatMemberType(selectedMemberInfo.member_type) }}</span>

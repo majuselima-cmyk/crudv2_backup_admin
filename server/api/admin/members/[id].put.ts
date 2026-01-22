@@ -1,15 +1,16 @@
 /**
  * Update member
  * PUT /api/admin/members/[id]
- * Body: { email?, username?, status? }
+ * Body: { email?, username?, status?, password?, referral_code?, member_type?, bonus_aktif_withdraw_enabled?, bonus_pasif_withdraw_enabled? }
  */
 import { createClient } from '@supabase/supabase-js'
+import * as bcryptjs from 'bcryptjs'
 
 export default defineEventHandler(async (event) => {
   try {
     const id = getRouterParam(event, 'id')
     const body = await readBody(event)
-    const { email, username, referral_code, member_type, status, bonus_aktif_withdraw_enabled, bonus_pasif_withdraw_enabled } = body
+    const { email, username, referral_code, member_type, status, password, bonus_aktif_withdraw_enabled, bonus_pasif_withdraw_enabled } = body
 
     if (!id) {
       throw createError({
@@ -108,6 +109,21 @@ export default defineEventHandler(async (event) => {
 
     if (bonus_pasif_withdraw_enabled !== undefined) {
       updateData.bonus_pasif_withdraw_enabled = Boolean(bonus_pasif_withdraw_enabled)
+    }
+
+    // Handle password update
+    if (password !== undefined && password !== null && password.trim() !== '') {
+      // Validate password length
+      if (password.length < 6) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Password minimal 6 karakter'
+        })
+      }
+      // Hash password
+      const saltRounds = 10
+      const hashedPassword = bcryptjs.hashSync(password, saltRounds)
+      updateData.password = hashedPassword
     }
 
     // Check if member exists and get current data

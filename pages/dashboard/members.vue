@@ -37,8 +37,8 @@
               </div>
             </div>
             <button 
-              disabled
-              class="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed opacity-50 whitespace-nowrap shadow-sm"
+              @click="openCreateModal"
+              class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition whitespace-nowrap shadow-sm"
             >
               <Icon name="plus" size="sm" />
               Tambah Member
@@ -330,6 +330,158 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- Create Member Modal -->
+    <div 
+      v-if="showCreateModal"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      @click.self="closeCreateModal"
+    >
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold text-gray-800">Tambah Member Baru</h3>
+            <button 
+              @click="closeCreateModal"
+              class="text-gray-400 hover:text-gray-600 transition"
+            >
+              <Icon name="close" size="md" />
+            </button>
+          </div>
+        </div>
+
+        <form @submit.prevent="handleCreate" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
+            <input
+              v-model="createForm.email"
+              type="email"
+              required
+              placeholder="contoh@email.com"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Username <span class="text-red-500">*</span></label>
+            <input
+              v-model="createForm.username"
+              type="text"
+              required
+              placeholder="min 3 karakter, huruf/angka/underscore"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Password <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <input
+                v-model="createForm.password"
+                :type="showCreatePassword ? 'text' : 'password'"
+                required
+                minlength="6"
+                placeholder="minimal 6 karakter"
+                class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+              />
+              <button
+                type="button"
+                @click="showCreatePassword = !showCreatePassword"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+              >
+                <Icon :name="showCreatePassword ? 'eye-slash' : 'eye'" size="sm" />
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Minimal 6 karakter</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Kode Referral</label>
+            <input
+              v-model="createForm.referral_code"
+              type="text"
+              placeholder="Kosongkan untuk auto-generate"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 font-mono"
+            />
+            <p class="text-xs text-gray-500 mt-1">3-20 karakter, huruf besar/angka/underscore. Kosongkan = auto-generate</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Referred By (opsional)</label>
+            <input
+              v-model="createForm.referred_by"
+              type="text"
+              placeholder="ID member atau kode referral upline"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Member Type</label>
+            <select
+              v-model="createForm.member_type"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="normal">Normal</option>
+              <option value="leader">Leader</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              v-model="createForm.status"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="active">Aktif</option>
+              <option value="inactive">Tidak Aktif</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+
+          <div class="border-t border-gray-200 pt-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-gray-700">Bonus Aktif Withdraw</label>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input v-model="createForm.bonus_aktif_withdraw_enabled" type="checkbox" class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span class="ml-3 text-sm text-gray-700">{{ createForm.bonus_aktif_withdraw_enabled ? 'Enable' : 'Disable' }}</span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-gray-700">Bonus Pasif Withdraw</label>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input v-model="createForm.bonus_pasif_withdraw_enabled" type="checkbox" class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span class="ml-3 text-sm text-gray-700">{{ createForm.bonus_pasif_withdraw_enabled ? 'Enable' : 'Disable' }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="createError" class="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-600">{{ createError }}</p>
+          </div>
+
+          <div class="flex items-center gap-3 pt-4">
+            <button
+              type="submit"
+              :disabled="isCreating"
+              class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {{ isCreating ? 'Menyimpan...' : 'Tambah Member' }}
+            </button>
+            <button
+              type="button"
+              @click="closeCreateModal"
+              class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- Edit Modal -->
@@ -688,6 +840,21 @@ const showDeleteModal = ref(false)
 const isUpdating = ref(false)
 const isDeleting = ref(false)
 const updateError = ref('')
+const showCreateModal = ref(false)
+const isCreating = ref(false)
+const createError = ref('')
+const showCreatePassword = ref(false)
+const createForm = ref({
+  email: '',
+  username: '',
+  password: '',
+  referral_code: '',
+  referred_by: '',
+  member_type: 'normal',
+  status: 'active',
+  bonus_aktif_withdraw_enabled: true,
+  bonus_pasif_withdraw_enabled: true
+})
 const deleteError = ref('')
 const memberToDelete = ref(null)
 const showReferralsModal = ref(false)
@@ -711,6 +878,72 @@ const editForm = ref({
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+const openCreateModal = () => {
+  resetCreateForm()
+  createError.value = ''
+  showCreateModal.value = true
+}
+
+const closeCreateModal = () => {
+  showCreateModal.value = false
+  resetCreateForm()
+  createError.value = ''
+}
+
+const resetCreateForm = () => {
+  createForm.value = {
+    email: '',
+    username: '',
+    password: '',
+    referral_code: '',
+    referred_by: '',
+    member_type: 'normal',
+    status: 'active',
+    bonus_aktif_withdraw_enabled: true,
+    bonus_pasif_withdraw_enabled: true
+  }
+}
+
+const handleCreate = async () => {
+  isCreating.value = true
+  createError.value = ''
+
+  try {
+    const body = {
+      email: createForm.value.email.trim(),
+      username: createForm.value.username.trim(),
+      password: createForm.value.password,
+      member_type: createForm.value.member_type,
+      status: createForm.value.status,
+      bonus_aktif_withdraw_enabled: createForm.value.bonus_aktif_withdraw_enabled,
+      bonus_pasif_withdraw_enabled: createForm.value.bonus_pasif_withdraw_enabled
+    }
+    if (createForm.value.referral_code && createForm.value.referral_code.trim() !== '') {
+      body.referral_code = createForm.value.referral_code.trim()
+    }
+    if (createForm.value.referred_by && createForm.value.referred_by.trim() !== '') {
+      body.referred_by = createForm.value.referred_by.trim()
+    }
+
+    const response = await $fetch('/api/admin/members', {
+      method: 'POST',
+      body
+    })
+
+    if (response.success) {
+      closeCreateModal()
+      await fetchMembers()
+    } else {
+      createError.value = response.message || 'Gagal menambah member'
+    }
+  } catch (error) {
+    console.error('Error creating member:', error)
+    createError.value = error?.data?.message || error?.message || 'Gagal menambah member'
+  } finally {
+    isCreating.value = false
+  }
 }
 
 // Fetch members

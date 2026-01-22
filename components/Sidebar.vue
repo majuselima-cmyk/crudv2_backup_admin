@@ -116,6 +116,16 @@ const menuItems = computed(() => [
     icon: 'settings'
   },
   {
+    path: '/dashboard/bonus-active-report',
+    label: 'Report Bonus Aktif',
+    icon: 'chart-bar'
+  },
+  {
+    path: '/dashboard/bonus-pasif',
+    label: 'Bonus Pasif',
+    icon: 'star'
+  },
+  {
     path: '/dashboard/coin',
     label: 'Coin',
     icon: 'settings'
