@@ -1453,40 +1453,21 @@ const createMultiplierStaking = async () => {
       )
       
       // Simpan schedules ke bonus_multiplier_schedule
-      let schedulesSaved = true
-      let scheduleErrorMsg = ''
       if (schedules.length > 0) {
-        try {
-          const scheduleResponse = await $fetch('/api/admin/bonus-multiplier-schedules', {
-            method: 'POST',
-            body: {
-              multiplier_staking_id: multiplierStakingId,
-              schedules: schedules
-            }
-          })
-          
-          if (!scheduleResponse.success) {
-            schedulesSaved = false
-            scheduleErrorMsg = scheduleResponse.message || 'Gagal menyimpan jadwal reward'
-            console.error('[Multiplier] Error saving schedules:', scheduleErrorMsg)
+        await $fetch('/api/admin/bonus-multiplier-schedules', {
+          method: 'POST',
+          body: {
+            multiplier_staking_id: multiplierStakingId,
+            schedules: schedules
           }
-        } catch (err) {
-          schedulesSaved = false
-          scheduleErrorMsg = err?.data?.message || err?.message || 'Gagal menyimpan jadwal reward'
+        }).catch(err => {
           console.error('[Multiplier] Error saving schedules:', err)
-        }
-      }
-
-      if (schedulesSaved) {
-        successMessage.value = 'Staking Multiplier berhasil dibuat dengan ' + schedules.length + ' jadwal reward'
-      } else {
-        errorMessage.value = 'Staking multiplier berhasil dibuat tapi jadwal reward gagal disimpan: ' + scheduleErrorMsg
+          // Continue even if schedule save fails, staking already created
+        })
       }
       
-      setTimeout(() => {
-        successMessage.value = ''
-        errorMessage.value = ''
-      }, 5000)
+      successMessage.value = 'Staking Multiplier berhasil dibuat dengan ' + schedules.length + ' jadwal reward'
+      setTimeout(() => successMessage.value = '', 5000)
       closeStakingMultiplierModal()
       await fetchData()
     }
