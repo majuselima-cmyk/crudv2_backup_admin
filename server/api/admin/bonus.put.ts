@@ -1,7 +1,7 @@
 /**
  * Update bonus settings
  * PUT /api/admin/bonus
- * Body: { referral_percentage, referral_balance_percentage, referral_coin_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, multiplier_percentage, is_active }
+ * Body: { referral_percentage, referral_balance_percentage, referral_coin_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, reward_interval_minutes, multiplier_percentage, is_active }
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -17,9 +17,11 @@ export default defineEventHandler(async (event) => {
       matching_level3_percentage,
       loyalty_percentage,
       reward_percentage,
+      reward_interval_minutes,
+      default_staking_duration_minutes,
       multiplier_percentage,
       multiplier_increment_percentage,
-      multiplier_increment_days,
+      multiplier_increment_minutes,
       is_active
     } = body
 
@@ -33,14 +35,24 @@ export default defineEventHandler(async (event) => {
       matching_level3_percentage === undefined ||
       loyalty_percentage === undefined ||
       reward_percentage === undefined ||
+      reward_interval_minutes === undefined || // NEW
       multiplier_percentage === undefined ||
       multiplier_increment_percentage === undefined ||
-      multiplier_increment_days === undefined ||
+      multiplier_increment_minutes === undefined ||
       is_active === undefined
     ) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Semua field wajib diisi'
+      })
+    }
+
+    // Validate reward_interval_minutes (min 1 minute)
+    const intervalMinutes = parseInt(reward_interval_minutes)
+    if (isNaN(intervalMinutes) || intervalMinutes < 1) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Reward interval harus minimal 1 menit'
       })
     }
 
@@ -67,12 +79,24 @@ export default defineEventHandler(async (event) => {
       { name: 'Multiplier Increment', value: multiplier_increment_percentage }
     ]
 
-    // Validate multiplier_increment_days (min 1 day)
-    const incrementDays = parseInt(multiplier_increment_days)
-    if (isNaN(incrementDays) || incrementDays < 1) {
+    // Validate multiplier_increment_minutes (min 1 minute)
+    const incrementMinutes = parseInt(multiplier_increment_minutes)
+    if (isNaN(incrementMinutes) || incrementMinutes < 1) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Multiplier increment days harus minimal 1 hari'
+        statusMessage: 'Multiplier increment harus minimal 1 menit'
+      })
+    }
+
+    // Validate default_staking_duration_minutes (min 1 minute for testing, recommended 43200 for production)
+    const MIN_STAKING_DURATION = 1 // Allow testing with 1 minute minimum
+    const stakingDuration = default_staking_duration_minutes !== undefined 
+      ? parseInt(default_staking_duration_minutes) 
+      : 43200 // Default to 1 month if not provided
+    if (isNaN(stakingDuration) || stakingDuration < MIN_STAKING_DURATION) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Default staking duration minimal ${MIN_STAKING_DURATION} menit`
       })
     }
 
@@ -126,9 +150,11 @@ export default defineEventHandler(async (event) => {
           matching_level3_percentage: parseFloat(matching_level3_percentage),
           loyalty_percentage: parseFloat(loyalty_percentage),
           reward_percentage: parseFloat(reward_percentage),
+          reward_interval_minutes: parseInt(reward_interval_minutes),
+          default_staking_duration_minutes: stakingDuration,
           multiplier_percentage: parseFloat(multiplier_percentage),
           multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
-          multiplier_increment_days: parseInt(multiplier_increment_days),
+          multiplier_increment_minutes: parseInt(multiplier_increment_minutes),
           is_active: Boolean(is_active)
         })
         .eq('id', existingSettings.id)
@@ -156,9 +182,11 @@ export default defineEventHandler(async (event) => {
           matching_level3_percentage: parseFloat(matching_level3_percentage),
           loyalty_percentage: parseFloat(loyalty_percentage),
           reward_percentage: parseFloat(reward_percentage),
+          reward_interval_minutes: parseInt(reward_interval_minutes),
+          default_staking_duration_minutes: stakingDuration,
           multiplier_percentage: parseFloat(multiplier_percentage),
           multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
-          multiplier_increment_days: parseInt(multiplier_increment_days),
+          multiplier_increment_minutes: parseInt(multiplier_increment_minutes),
           is_active: Boolean(is_active)
         })
         .select('*')

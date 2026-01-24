@@ -25,12 +25,13 @@ export default defineEventHandler(async (event) => {
     })
 
     // Get bonus settings (should only have one record)
-    const { data: settings, error } = await supabase
+    const { data: settingsArray, error } = await supabase
       .from('bonus_settings')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+
+    const settings = settingsArray && settingsArray.length > 0 ? settingsArray[0] : null
 
     if (error) {
       // Log error untuk debugging
@@ -49,6 +50,7 @@ export default defineEventHandler(async (event) => {
             matching_level3_percentage: 2.00,
             loyalty_percentage: 10.00,
             reward_percentage: 0.50,
+            default_staking_duration_minutes: 43200,
             multiplier_percentage: 10.00,
             multiplier_increment_percentage: 10.00,
             multiplier_increment_days: 7,
@@ -77,6 +79,7 @@ export default defineEventHandler(async (event) => {
           matching_level3_percentage: 2.00,
           loyalty_percentage: 10.00,
           reward_percentage: 0.50,
+          default_staking_duration_minutes: 43200,
           multiplier_percentage: 10.00,
           multiplier_increment_percentage: 10.00,
           multiplier_increment_days: 7,

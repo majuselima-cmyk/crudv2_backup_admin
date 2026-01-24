@@ -79,18 +79,20 @@ export default defineEventHandler(async (event) => {
       (rewardHistory || []).map(async (reward: any) => {
         try {
           // Get member info
-          const { data: memberData } = await supabase
+          const { data: memberDataArray } = await supabase
             .from('members')
             .select('id, email, username, referral_code, member_type')
             .eq('id', reward.member_id)
-            .single()
+
+          const memberData = memberDataArray && memberDataArray.length > 0 ? memberDataArray[0] : null
 
           // Get staking info
-          const { data: stakingData } = await supabase
+          const { data: stakingDataArray } = await supabase
             .from('staking')
-            .select('id, coin_amount, reward_percentage, status')
+            .select('id, coin_amount, reward_percentage, status, staked_at')
             .eq('id', reward.staking_id)
-            .single()
+
+          const stakingData = stakingDataArray && stakingDataArray.length > 0 ? stakingDataArray[0] : null
 
           return {
             ...reward,

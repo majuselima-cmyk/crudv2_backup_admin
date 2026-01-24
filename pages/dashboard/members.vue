@@ -79,10 +79,12 @@
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">No</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Email</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Username</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Password</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Referral Code</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Total Downline</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Total Balance</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Saldo Coin</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Total Coin Deposit</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Member Type</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
                   <th class="text-left py-3 px-4 text-sm font-medium text-gray-700">Withdraw</th>
@@ -91,18 +93,42 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
+                <template v-for="(member, index) in filteredMembers" :key="member.id">
                 <tr 
-                  v-for="(member, index) in filteredMembers" 
-                  :key="member.id"
-                  class="hover:bg-gray-50 transition"
+                  class="hover:bg-gray-50 transition cursor-pointer"
+                  @click="toggleMemberDetail(member.id)"
                 >
-                  <td class="py-4 px-4 text-gray-600">{{ index + 1 }}</td>
+                  <td class="py-4 px-4 text-gray-600">
+                    <div class="flex items-center gap-2">
+                      <Icon 
+                        :name="expandedMembers[member.id] ? 'chevron-down' : 'chevron-right'" 
+                        size="sm" 
+                        class="text-gray-400"
+                      />
+                      {{ index + 1 }}
+                    </div>
+                  </td>
                   <td class="py-4 px-4 text-gray-800">{{ member.email }}</td>
                   <td class="py-4 px-4 text-gray-800">{{ member.username }}</td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-sm text-gray-700">
+                        {{ visiblePasswords[member.id] ? (memberPasswords[member.id] || 'Loading...') : '••••••••' }}
+                      </span>
+                      <button
+                        type="button"
+                        @click.stop="togglePasswordVisibility(member.id)"
+                        class="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                        title="Toggle password visibility"
+                      >
+                        <Icon :name="visiblePasswords[member.id] ? 'eye-slash' : 'eye'" size="sm" />
+                      </button>
+                    </div>
+                  </td>
                   <td class="py-4 px-4 text-gray-600 font-mono text-sm">{{ member.referral_code || '-' }}</td>
                   <td class="py-4 px-4">
                     <button
-                      @click="openReferralsModal(member)"
+                      @click.stop="openReferralsModal(member)"
                       :class="[
                         'px-3 py-1 rounded-lg text-sm font-medium transition cursor-pointer',
                         member.total_downline > 0
@@ -135,6 +161,16 @@
                       </span>
                       <span class="text-xs text-gray-500">
                         Saldo Coin
+                      </span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-semibold text-purple-600">
+                        {{ formatNumber(member.total_coin_from_deposits || 0) }} Coin
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        Total dari Deposit
                       </span>
                     </div>
                   </td>
@@ -198,14 +234,14 @@
                   <td class="py-4 px-4">
                     <div class="flex items-center gap-3">
                       <button 
-                        @click="openEditModal(member)"
+                        @click.stop="openEditModal(member)"
                         class="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition text-sm font-medium"
                       >
                         <Icon name="edit" size="sm" />
                         Edit
                       </button>
                       <button 
-                        @click="confirmDelete(member)"
+                        @click.stop="confirmDelete(member)"
                         class="flex items-center gap-1 text-red-600 hover:text-red-700 transition text-sm font-medium"
                       >
                         <Icon name="delete" size="sm" />
@@ -214,8 +250,317 @@
                     </div>
                   </td>
                 </tr>
+                <!-- Expanded Detail Row -->
+                <tr v-if="expandedMembers[member.id]" class="bg-blue-50">
+                  <td colspan="14" class="py-6 px-6">
+                    <div v-if="loadingMemberBonus[member.id]" class="flex items-center justify-center py-4">
+                      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span class="ml-3 text-sm text-gray-600">Memuat detail bonus...</span>
+                    </div>
+                    <div v-else-if="memberBonusDetails[member.id]" class="space-y-4">
+                      <h3 class="text-lg font-semibold text-gray-800 mb-4">Detail Bonus Member</h3>
+                      
+                      <!-- Bonus Pasif -->
+                      <div class="bg-white rounded-lg p-4 border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Bonus Pasif</h4>
+                        <p class="text-sm text-gray-600">
+                          Persentase: <span class="font-semibold text-blue-600">15%</span>
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                          Reward per interval: {{ bonusSettings?.reward_percentage || 0.5 }}% ({{ bonusSettings?.reward_interval_minutes || 240 }} menit)
+                        </p>
+                      </div>
+
+                      <!-- Referral Bonus -->
+                      <div class="bg-white rounded-lg p-4 border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Referral Bonus</h4>
+                        <div class="space-y-3">
+                          <!-- Total Deposit Downline -->
+                          <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <p class="text-xs text-gray-600 mb-1">Total Deposit dari Downline</p>
+                            <p class="text-lg font-bold text-gray-800">
+                              {{ formatCurrency(memberBonusDetails[member.id].total_downline_deposit || 0) }} USDT
+                            </p>
+                          </div>
+
+                          <!-- Referral Percentage -->
+                          <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                            <p class="text-xs text-gray-600 mb-1">Persentase Referral Bonus</p>
+                            <p class="text-lg font-bold text-blue-600">
+                              {{ memberBonusDetails[member.id].referral_percentage || bonusSettings?.referral_percentage || 15 }}%
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                              Dari total deposit downline
+                            </p>
+                          </div>
+
+                          <!-- Total Referral Bonus (15%) -->
+                          <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                            <p class="text-xs text-gray-600 mb-1">Total Referral Bonus ({{ memberBonusDetails[member.id].referral_percentage || bonusSettings?.referral_percentage || 15 }}%)</p>
+                            <p class="text-lg font-bold text-yellow-600">
+                              {{ formatCurrency(memberBonusDetails[member.id].total_referral_bonus || 0) }} USDT
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                              = {{ formatCurrency(memberBonusDetails[member.id].total_downline_deposit || 0) }} × {{ memberBonusDetails[member.id].referral_percentage || bonusSettings?.referral_percentage || 15 }}%
+                            </p>
+                          </div>
+
+                          <!-- Breakdown Alokasi -->
+                          <div class="pt-2">
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Breakdown Alokasi:</p>
+                            <div class="grid grid-cols-2 gap-3">
+                              <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                                <p class="text-xs text-gray-600 mb-1">Alokasi ke USDT</p>
+                                <p class="text-lg font-bold text-green-600">
+                                  {{ formatCurrency(memberBonusDetails[member.id].referral_bonus_usdt || 0) }} USDT
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                  {{ memberBonusDetails[member.id].referral_balance_percentage || bonusSettings?.referral_balance_percentage || 80 }}% dari {{ formatCurrency(memberBonusDetails[member.id].total_referral_bonus || 0) }} USDT
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                  = {{ formatCurrency(memberBonusDetails[member.id].total_referral_bonus || 0) }} × {{ memberBonusDetails[member.id].referral_balance_percentage || bonusSettings?.referral_balance_percentage || 80 }}%
+                                </p>
+                                <div class="mt-2 pt-2 border-t border-green-300">
+                                  <p class="text-xs text-gray-600">
+                                    Jika dikonversi ke Coin:
+                                  </p>
+                                  <p class="text-sm font-semibold text-green-700 mt-0.5">
+                                    {{ formatNumber(memberBonusDetails[member.id].referral_bonus_usdt_to_coin || 0) }} Coin
+                                  </p>
+                                  <p class="text-xs text-gray-400 mt-0.5">
+                                    = {{ formatCurrency(memberBonusDetails[member.id].referral_bonus_usdt || 0) }} ÷ {{ formatNumber(memberBonusDetails[member.id].coin_price || 0.5) }} USDT/Coin
+                                  </p>
+                                </div>
+                              </div>
+                              <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                                <p class="text-xs text-gray-600 mb-1">Alokasi ke Coin</p>
+                                <p class="text-lg font-bold text-purple-600">
+                                  {{ formatNumber(memberBonusDetails[member.id].referral_bonus_coin || 0) }} Coin
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                  {{ memberBonusDetails[member.id].referral_coin_percentage || bonusSettings?.referral_coin_percentage || 20 }}% dari {{ formatCurrency(memberBonusDetails[member.id].total_referral_bonus || 0) }} USDT
+                                </p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                  = {{ formatCurrency(memberBonusDetails[member.id].total_referral_bonus || 0) }} × {{ memberBonusDetails[member.id].referral_coin_percentage || bonusSettings?.referral_coin_percentage || 20 }}%
+                                </p>
+                                <div class="mt-2 pt-2 border-t border-purple-300">
+                                  <p class="text-xs text-gray-600">
+                                    Jika dikonversi ke USDT:
+                                  </p>
+                                  <p class="text-sm font-semibold text-purple-700 mt-0.5">
+                                    {{ formatCurrency(memberBonusDetails[member.id].referral_bonus_coin_to_usdt || 0) }} USDT
+                                  </p>
+                                  <p class="text-xs text-gray-400 mt-0.5">
+                                    = {{ formatNumber(memberBonusDetails[member.id].referral_bonus_coin || 0) }} × {{ formatNumber(memberBonusDetails[member.id].coin_price || 0.5) }} USDT/Coin
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Matching Bonus (Bonus Aktif) -->
+                      <div v-if="memberBonusDetails[member.id].matching_bonus_details" class="bg-white rounded-lg p-4 border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <Icon name="lightning-bolt" size="sm" class="text-orange-500" />
+                          Bonus Matching (Bonus Aktif)
+                        </h4>
+                        
+                        <!-- Total Matching Bonus -->
+                        <div class="bg-orange-50 rounded-lg p-3 border border-orange-200 mb-4">
+                          <p class="text-xs text-gray-600 mb-1">Total Bonus Matching</p>
+                          <p class="text-lg font-bold text-orange-600">
+                            {{ formatCurrency(memberBonusDetails[member.id].total_matching_bonus || 0) }} USDT
+                          </p>
+                          <p class="text-xs text-gray-500 mt-1">
+                            {{ memberBonusDetails[member.id].matching_bonus_details.explanation }}
+                          </p>
+                        </div>
+
+                        <!-- Matching Breakdown Alokasi -->
+                        <div class="mb-4">
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Breakdown Alokasi Matching:</p>
+                            <div class="grid grid-cols-2 gap-3">
+                              <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                                <p class="text-xs text-gray-600 mb-1">Alokasi ke USDT</p>
+                                <p class="text-lg font-bold text-green-600">
+                                  {{ formatCurrency(memberBonusDetails[member.id].matching_bonus_details.matching_bonus_usdt || 0) }} USDT
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                  {{ memberBonusDetails[member.id].referral_balance_percentage }}% dari Total Matching
+                                </p>
+                              </div>
+                              <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                                <p class="text-xs text-gray-600 mb-1">Alokasi ke Coin</p>
+                                <p class="text-lg font-bold text-purple-600">
+                                  {{ formatNumber(memberBonusDetails[member.id].matching_bonus_details.matching_bonus_coin || 0) }} Coin
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                  {{ memberBonusDetails[member.id].referral_coin_percentage }}% dari Total Matching
+                                </p>
+                              </div>
+                            </div>
+                        </div>
+
+                        <!-- Matching Levels Breakdown -->
+                        <div class="space-y-3">
+                          <p class="text-xs font-semibold text-gray-700 mb-2">Breakdown per Level Matching:</p>
+                          
+                          <div 
+                            v-for="(level, index) in memberBonusDetails[member.id].matching_bonus_levels" 
+                            :key="index"
+                            class="border border-gray-200 rounded-lg p-3"
+                            :class="{
+                              'bg-green-50 border-green-200': level.matching_bonus > 0,
+                              'bg-gray-50 border-gray-200': level.matching_bonus === 0
+                            }"
+                          >
+                            <div class="flex items-center justify-between mb-2">
+                              <h5 class="text-sm font-semibold text-gray-800">
+                                Level {{ level.matching_level }} Matching
+                                <span class="text-xs text-gray-500 font-normal">
+                                  (dari Level {{ level.referral_level }} Referral)
+                                </span>
+                              </h5>
+                              <span 
+                                class="text-xs px-2 py-1 rounded font-medium"
+                                :class="{
+                                  'bg-green-100 text-green-700': level.matching_bonus > 0,
+                                  'bg-gray-100 text-gray-600': level.matching_bonus === 0
+                                }"
+                              >
+                                {{ level.percentage }}%
+                              </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                              <div>
+                                <p class="text-gray-600">Member di Level ini:</p>
+                                <p class="font-semibold text-gray-800">{{ level.member_count }} orang</p>
+                              </div>
+                              <div>
+                                <p class="text-gray-600">Total Deposit Level:</p>
+                                <p class="font-semibold text-gray-800">{{ formatCurrency(level.total_deposits) }} USDT</p>
+                              </div>
+                            </div>
+                            
+                            <div class="mt-2 pt-2 border-t border-gray-300">
+                              <p class="text-xs text-gray-600">Total Bonus Matching Level Ini:</p>
+                              <p class="text-sm font-bold" :class="{
+                                'text-green-600': level.matching_bonus > 0,
+                                'text-gray-600': level.matching_bonus === 0
+                              }">
+                                {{ formatCurrency(level.matching_bonus) }} USDT
+                              </p>
+                              <p class="text-xs text-gray-500 mt-1 mb-2">
+                                = {{ formatCurrency(level.total_deposits) }} × {{ level.percentage }}%
+                              </p>
+                              
+                              <!-- Breakdown Allocation Per Level -->
+                              <div v-if="level.matching_bonus > 0" class="grid grid-cols-2 gap-2 mt-2 bg-white/50 p-2 rounded border border-gray-200">
+                                <div>
+                                    <p class="text-[10px] text-gray-500 uppercase">Ke Balance (USDT)</p>
+                                    <p class="text-xs font-bold text-green-600">
+                                      + {{ formatCurrency(level.matching_bonus_usdt || 0) }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-gray-500 uppercase">Ke Coin</p>
+                                    <p class="text-xs font-bold text-purple-600">
+                                      + {{ formatNumber(level.matching_bonus_coin || 0) }} Coin
+                                    </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Members List (collapsible) -->
+                            <div v-if="level.members && level.members.length > 0" class="mt-3">
+                              <button 
+                                @click="toggleMatchingLevelMembers(member.id, index)"
+                                class="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition"
+                              >
+                                <Icon 
+                                  :name="expandedMatchingLevels[`${member.id}_${index}`] ? 'chevron-down' : 'chevron-right'" 
+                                  size="xs" 
+                                />
+                                {{ expandedMatchingLevels[`${member.id}_${index}`] ? 'Sembunyikan' : 'Tampilkan' }} Member ({{ level.members.length }})
+                              </button>
+                              
+                              <div v-if="expandedMatchingLevels[`${member.id}_${index}`]" class="mt-2 space-y-1">
+                                <div 
+                                  v-for="levelMember in level.members" 
+                                  :key="levelMember.id"
+                                  class="bg-white rounded p-2 border border-gray-200 text-xs"
+                                >
+                                  <div class="flex items-center justify-between">
+                                    <span class="font-medium text-gray-800">{{ levelMember.email }}</span>
+                                    <span class="text-gray-600">{{ formatCurrency(levelMember.deposits) }} USDT</span>
+                                  </div>
+                                  <p class="text-gray-500 text-xs">{{ levelMember.username }}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Grand Total Summary -->
+                      <div class="bg-gray-800 rounded-lg p-4 text-white">
+                        <h4 class="text-sm font-semibold text-gray-300 mb-3">Ringkasan Total Bonus (Referral + Matching)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <!-- Total USDT Breakdown -->
+                          <div class="bg-gray-700 rounded p-3 border border-gray-600">
+                            <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Total Masuk ke Balance (USDT)</p>
+                            <div class="space-y-1 mb-2">
+                              <div class="flex justify-between text-xs text-gray-300">
+                                <span>Referral (USDT):</span>
+                                <span>+ {{ formatCurrency(memberBonusDetails[member.id].referral_bonus_usdt || 0) }}</span>
+                              </div>
+                              <div class="flex justify-between text-xs text-gray-300">
+                                <span>Matching (USDT):</span>
+                                <span>+ {{ formatCurrency(memberBonusDetails[member.id].matching_bonus_details?.matching_bonus_usdt || 0) }}</span>
+                              </div>
+                            </div>
+                            <div class="border-t border-gray-600 pt-2 flex justify-between items-center">
+                              <span class="text-xs text-gray-400">Total Penambahan:</span>
+                              <span class="text-xl font-bold text-green-400">
+                                + {{ formatCurrency(memberBonusDetails[member.id].grand_total_bonus_usdt || 0) }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <!-- Total Coin Breakdown -->
+                          <div class="bg-gray-700 rounded p-3 border border-gray-600">
+                            <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Total Masuk ke Coin</p>
+                            <div class="space-y-1 mb-2">
+                              <div class="flex justify-between text-xs text-gray-300">
+                                <span>Referral (Coin):</span>
+                                <span>+ {{ formatNumber(memberBonusDetails[member.id].referral_bonus_coin || 0) }}</span>
+                              </div>
+                              <div class="flex justify-between text-xs text-gray-300">
+                                <span>Matching (Coin):</span>
+                                <span>+ {{ formatNumber(memberBonusDetails[member.id].matching_bonus_details?.matching_bonus_coin || 0) }}</span>
+                              </div>
+                            </div>
+                            <div class="border-t border-gray-600 pt-2 flex justify-between items-center">
+                              <span class="text-xs text-gray-400">Total Penambahan:</span>
+                              <span class="text-xl font-bold text-purple-400">
+                                + {{ formatNumber(memberBonusDetails[member.id].grand_total_bonus_coin || 0) }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="text-center py-4 text-gray-500 text-sm">
+                      Gagal memuat detail bonus
+                    </div>
+                  </td>
+                </tr>
+                </template>
                 <tr v-if="filteredMembers.length === 0 && !loading">
-                  <td colspan="12" class="py-8 px-4 text-center text-gray-400">
+                  <td colspan="14" class="py-8 px-4 text-center text-gray-400">
                     {{ searchQuery ? 'Tidak ada data member yang sesuai dengan pencarian' : 'Tidak ada data member' }}
                   </td>
                 </tr>
@@ -863,6 +1208,15 @@ const loadingReferrals = ref(false)
 const referralsData = ref(null)
 const referralsError = ref('')
 const showPassword = ref(false)
+const visiblePasswords = ref({})
+const memberPasswords = ref({}) // Store fetched passwords
+
+// Expandable row states
+const expandedMembers = ref({})
+const loadingMemberBonus = ref({})
+const memberBonusDetails = ref({})
+const bonusSettings = ref(null)
+const expandedMatchingLevels = ref({})
 
 const editForm = ref({
   id: '',
@@ -1159,6 +1513,58 @@ const closeReferralsModal = () => {
   referralsError.value = ''
 }
 
+const togglePasswordVisibility = async (memberId) => {
+  // Toggle visibility
+  if (visiblePasswords.value[memberId]) {
+    // Hide password
+    delete visiblePasswords.value[memberId]
+    // Trigger reactivity by reassigning
+    visiblePasswords.value = { ...visiblePasswords.value }
+  } else {
+    // Show password - fetch if not already cached
+    if (!memberPasswords.value[memberId]) {
+      // Check if password exists in member data first
+      const member = members.value.find(m => m.id === memberId)
+      if (member?.password) {
+        memberPasswords.value = {
+          ...memberPasswords.value,
+          [memberId]: member.password
+        }
+      } else {
+        // Try to fetch password from API endpoint
+        try {
+          const response = await $fetch(`/api/admin/members/${memberId}/password`).catch(() => null)
+          if (response?.success && response?.data?.password) {
+            memberPasswords.value = {
+              ...memberPasswords.value,
+              [memberId]: response.data.password
+            }
+          } else {
+            // Password not available - might be hashed or not returned
+            memberPasswords.value = {
+              ...memberPasswords.value,
+              [memberId]: 'Password tidak tersedia (mungkin sudah di-hash)'
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching password:', error)
+          // Password might not be available from API
+          memberPasswords.value = {
+            ...memberPasswords.value,
+            [memberId]: 'Password tidak tersedia'
+          }
+        }
+      }
+    }
+    
+    // Show password
+    visiblePasswords.value = {
+      ...visiblePasswords.value,
+      [memberId]: true
+    }
+  }
+}
+
 // Edit modal
 const openEditModal = (member) => {
   editForm.value = {
@@ -1278,9 +1684,73 @@ const handleDelete = async () => {
   }
 }
 
+// Toggle member detail (expandable row)
+const toggleMemberDetail = async (memberId) => {
+  if (expandedMembers.value[memberId]) {
+    // Collapse
+    expandedMembers.value[memberId] = false
+  } else {
+    // Expand - fetch bonus details
+    expandedMembers.value[memberId] = true
+    
+    // If bonus details not loaded yet, fetch them
+    if (!memberBonusDetails.value[memberId]) {
+      await fetchMemberBonusDetails(memberId)
+    }
+    
+    // Fetch bonus settings if not loaded
+    if (!bonusSettings.value) {
+      await fetchBonusSettings()
+    }
+  }
+}
+
+// Fetch bonus settings
+const fetchBonusSettings = async () => {
+  try {
+    const response = await $fetch('/api/admin/bonus')
+    if (response.success && response.data) {
+      bonusSettings.value = response.data
+    }
+  } catch (error) {
+    console.error('Error fetching bonus settings:', error)
+  }
+}
+
+// Fetch member bonus details
+const fetchMemberBonusDetails = async (memberId) => {
+  loadingMemberBonus.value[memberId] = true
+  
+  try {
+    const response = await $fetch(`/api/admin/members/${memberId}/bonus-details`)
+    if (response.success) {
+      memberBonusDetails.value[memberId] = response.data
+    } else {
+      console.error('Failed to fetch bonus details:', response.message)
+    }
+  } catch (error) {
+    console.error('Error fetching member bonus details:', error)
+  } finally {
+    loadingMemberBonus.value[memberId] = false
+  }
+}
+
+// Toggle matching level members visibility
+const toggleMatchingLevelMembers = (memberId, levelIndex) => {
+  const key = `${memberId}_${levelIndex}`
+  if (expandedMatchingLevels.value[key]) {
+    delete expandedMatchingLevels.value[key]
+  } else {
+    expandedMatchingLevels.value[key] = true
+  }
+  // Trigger reactivity
+  expandedMatchingLevels.value = { ...expandedMatchingLevels.value }
+}
+
 // Load data on mount
 onMounted(() => {
   fetchMembers()
+  fetchBonusSettings()
 })
 </script>
 

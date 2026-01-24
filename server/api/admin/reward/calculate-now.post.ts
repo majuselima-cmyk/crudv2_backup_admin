@@ -1,18 +1,17 @@
 /**
- * Calculate daily reward for all active staking (Manual trigger)
- * POST /api/admin/calculate-daily-reward
- * Body: { date? } - optional, defaults to today
+ * Manual trigger reward calculation (Force)
+ * POST /api/admin/reward/calculate-now
+ * Body: { force: true } - optional, defaults to false
  * 
- * Note: Reward juga otomatis dihitung saat admin/member login
+ * Use this untuk manual trigger reward calculation tanpa menghiraukan interval
  */
 import { createClient } from '@supabase/supabase-js'
-import { calculateDailyReward } from '../../utils/calculateDailyReward'
+import { calculateDailyReward } from '../../../utils/calculateDailyReward'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event).catch(() => ({}))
-    const rewardDate = body.date || new Date().toISOString().split('T')[0] // YYYY-MM-DD format
-    const forceCalculate = body.forceCalculate === true // Force calculate even if within interval
+    const forceCalculate = body.force === true // Force calculation regardless of interval
 
     const config = useRuntimeConfig()
     const supabaseUrl = config.public?.supabaseUrl || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -32,13 +31,13 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Use utility function
-    const result = await calculateDailyReward(supabase, rewardDate, forceCalculate)
+    // Use utility function dengan force flag
+    const result = await calculateDailyReward(supabase, undefined, forceCalculate)
 
     if (!result.success) {
       throw createError({
         statusCode: 500,
-        statusMessage: result.message || 'Gagal menghitung reward harian'
+        statusMessage: result.message || 'Gagal menghitung reward'
       })
     }
 
@@ -48,10 +47,13 @@ export default defineEventHandler(async (event) => {
       data: {
         date: result.date,
         reward_percentage: result.reward_percentage,
+        reward_interval_minutes: result.reward_interval_minutes,
         total_staking: result.total_staking,
         processed: result.processed,
         skipped: result.skipped,
-        errors: result.errors
+        errors: result.errors,
+        next_calculation: result.next_calculation,
+        forced: forceCalculate
       }
     }
   } catch (error: any) {
@@ -61,8 +63,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: error?.statusCode || 500,
-      statusMessage: error?.message || 'Gagal menghitung reward harian'
+      statusMessage: error?.message || 'Gagal menghitung reward'
     })
   }
 })
-

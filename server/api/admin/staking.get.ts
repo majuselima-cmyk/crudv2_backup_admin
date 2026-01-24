@@ -26,23 +26,17 @@ export default defineEventHandler(async (event) => {
 
     // Get query parameters
     const query = getQuery(event)
-    // Increase default limit to 1000 to show more accounts, or use all if limit is 0
-    const limitParam = query.limit as string
-    const limit = limitParam === '0' || limitParam === 'all' ? null : (parseInt(limitParam) || 1000)
+    const limit = parseInt(query.limit as string) || 50
     const offset = parseInt(query.offset as string) || 0
     const status = query.status as string // optional filter: active, unstaked, cancelled
     const memberId = query.member_id as string // optional filter by member
 
-    // Build query without join (to avoid relationship error)
+    // Build query
     let stakingQuery = supabase
       .from('staking')
       .select('*', { count: 'exact' })
       .order('staked_at', { ascending: false })
-
-    // Apply range only if limit is specified
-    if (limit !== null) {
-      stakingQuery = stakingQuery.range(offset, offset + limit - 1)
-    }
+      .range(offset, offset + limit - 1)
 
     // Apply filters
     if (status) {
@@ -66,36 +60,62 @@ export default defineEventHandler(async (event) => {
       (stakingRecords || []).map(async (staking: any) => {
         try {
           // Get member info
-          const { data: memberData } = await supabase
+          const { data: memberDataArray, error: memberError } = await supabase
             .from('members')
             .select('id, email, username, referral_code, member_type')
             .eq('id', staking.member_id)
-            .single()
+
+          const memberData = memberDataArray && memberDataArray.length > 0 ? memberDataArray[0] : null
+
+          if (memberError && memberError.code !== 'PGRST116') {
+            console.error('[staking.get] Error fetching member:', memberError)
+          }
 
           // Get member coins info
-          const { data: memberCoins } = await supabase
+          const { data: memberCoinsArray, error: coinsError } = await supabase
             .from('member_coins')
             .select('total_coins, staked_coins, available_coins, coin_price, member_type')
             .eq('member_id', staking.member_id)
-            .single()
 
-          // Calculate total reward earned (sum from reward_history)
-          const { data: rewardHistory, count: rewardCount } = await supabase
-            .from('reward_history')
-            .select('reward_amount, status', { count: 'exact' })
-            .eq('staking_id', staking.id)
+          const memberCoins = memberCoinsArray && memberCoinsArray.length > 0 ? memberCoinsArray[0] : null
 
+          if (coinsError && coinsError.code !== 'PGRST116') {
+            console.error('[staking.get] Error fetching member coins:', coinsError)
+          }
+
+          // Calculate total reward paid from reward_schedules (status = 'paid')
           let totalRewardEarned = 0
           let totalRewardPaid = 0
-          if (rewardHistory) {
-            totalRewardEarned = rewardHistory.reduce((sum: number, reward: any) => {
-              return sum + (parseFloat(reward.reward_amount) || 0)
-            }, 0)
-            totalRewardPaid = rewardHistory
-              .filter((r: any) => r.status === 'paid')
-              .reduce((sum: number, reward: any) => {
-                return sum + (parseFloat(reward.reward_amount) || 0)
-              }, 0)
+          let rewardCount = 0
+          
+          if (staking.id) {
+            try {
+              // Calculate total_reward_paid from reward_schedules (status = 'paid')
+              // Ini adalah sumber utama untuk total reward yang sudah dibayar
+              const { data: rewardSchedules, error: scheduleError } = await supabase
+                .from('reward_schedules')
+                .select('reward_amount, status')
+                .eq('staking_id', staking.id)
+                .eq('status', 'paid')
+
+              if (scheduleError) {
+                // Log error untuk debugging
+                console.error('[staking.get] Error fetching reward schedules:', scheduleError)
+              } else if (rewardSchedules && rewardSchedules.length > 0) {
+                // Calculate total reward paid from reward_schedules
+                totalRewardPaid = rewardSchedules.reduce((sum: number, schedule: any) => {
+                  const amount = parseFloat(schedule.reward_amount) || 0
+                  return sum + amount
+                }, 0)
+                // Use totalRewardPaid as totalRewardEarned since reward_history table is removed
+                totalRewardEarned = totalRewardPaid
+                rewardCount = rewardSchedules.length
+                
+                console.log(`[staking.get] Staking ${staking.id}: Found ${rewardSchedules.length} paid schedules, total: ${totalRewardPaid}`)
+              }
+            } catch (rewardQueryError: any) {
+              console.error('[staking.get] Error querying reward data:', rewardQueryError)
+            }
           }
 
           return {
@@ -106,9 +126,8 @@ export default defineEventHandler(async (event) => {
             total_reward_paid: totalRewardPaid,
             reward_count: rewardCount || 0
           }
-        } catch (err: any) {
-          // If error fetching member coins or reward, still return staking data
-          console.error(`[staking.get] Error fetching details for staking ${staking.id}:`, err)
+        } catch (itemError) {
+          console.error('[staking.get] Error processing staking item:', itemError)
           return {
             ...staking,
             member: null,
@@ -129,6 +148,7 @@ export default defineEventHandler(async (event) => {
       offset
     }
   } catch (error: any) {
+    console.error('[staking.get] Error:', error)
     if (error && typeof error === 'object' && error.statusCode) {
       throw error
     }

@@ -39,19 +39,70 @@
       <nav class="flex-1 overflow-y-auto p-4">
         <ul class="space-y-2">
           <li v-for="item in menuItems" :key="item.path">
-            <NuxtLink
-              :to="item.path"
-              @click.stop="closeMobileMenu"
-              :class="[
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                isActive(item.path)
-                  ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-600 border border-blue-200 shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
-              ]"
-            >
-              <Icon :name="item.icon" size="md" />
-              <span class="font-medium">{{ item.label }}</span>
-            </NuxtLink>
+            <!-- Menu item tanpa sub-menu -->
+            <template v-if="!item.submenu">
+              <NuxtLink
+                :to="item.path"
+                @click.stop="closeMobileMenu"
+                :class="[
+                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                  isActive(item.path)
+                    ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-600 border border-blue-200 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
+                ]"
+              >
+                <Icon :name="item.icon" size="md" />
+                <span class="font-medium">{{ item.label }}</span>
+              </NuxtLink>
+            </template>
+
+            <!-- Menu item dengan sub-menu -->
+            <template v-else>
+              <button
+                @click="toggleSubmenu(item.path)"
+                :class="[
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                  isActiveMenu(item.path)
+                    ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-600 border border-blue-200 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-sm'
+                ]"
+              >
+                <Icon :name="item.icon" size="md" />
+                <span class="font-medium">{{ item.label }}</span>
+                <Icon 
+                  name="chevron-down" 
+                  size="sm" 
+                  :class="['transition-transform duration-200 ml-auto', openSubmenus[item.path] ? 'rotate-180' : '']"
+                />
+              </button>
+
+              <!-- Sub-menu items -->
+              <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="opacity-0 max-h-0"
+                enter-to-class="opacity-100 max-h-96"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="opacity-100 max-h-96"
+                leave-to-class="opacity-0 max-h-0"
+              >
+                <ul v-if="openSubmenus[item.path]" class="space-y-1 mt-1 ml-4 pl-2 border-l-2 border-gray-200">
+                  <li v-for="sub in item.submenu" :key="sub.path">
+                    <NuxtLink
+                      :to="sub.path"
+                      @click.stop="closeMobileMenu"
+                      :class="[
+                        'flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200',
+                        isActive(sub.path)
+                          ? 'bg-blue-50 text-blue-600 font-semibold'
+                          : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                      ]"
+                    >
+                      <span>{{ sub.label }}</span>
+                    </NuxtLink>
+                  </li>
+                </ul>
+              </Transition>
+            </template>
           </li>
         </ul>
       </nav>
@@ -93,6 +144,7 @@ const props = defineProps({
 const emit = defineEmits(['close-mobile-menu'])
 
 const isMobile = ref(false)
+const openSubmenus = ref({})
 
 const menuItems = computed(() => [
   {
@@ -117,13 +169,18 @@ const menuItems = computed(() => [
   },
   {
     path: '/dashboard/bonus-active-report',
-    label: 'Report Bonus Aktif',
+    label: 'Bonus Aktif',
     icon: 'chart-bar'
   },
   {
     path: '/dashboard/bonus-pasif',
     label: 'Bonus Pasif',
-    icon: 'star'
+    icon: 'star',
+    submenu: [
+      { path: '/dashboard/bonus-pasif/members', label: 'Member List' },
+      { path: '/dashboard/bonus-pasif/staking', label: 'Staking' },
+      { path: '/dashboard/bonus-pasif/bonus-multiplier', label: 'Bonus Multiplier' }
+    ]
   },
   {
     path: '/dashboard/coin',
@@ -158,7 +215,16 @@ const menuItems = computed(() => [
 ])
 
 const isActive = (path) => {
-  return route.path === path || route.path.startsWith(path)
+  return route.path === path
+}
+
+const isActiveMenu = (path) => {
+  // Check jika current path adalah submenu dari menu ini
+  return route.path.startsWith(path + '/') || route.path === path
+}
+
+const toggleSubmenu = (path) => {
+  openSubmenus.value[path] = !openSubmenus.value[path]
 }
 
 const closeMobileMenu = () => {
@@ -187,6 +253,22 @@ onMounted(() => {
     resizeHandler = checkMobile
     window.addEventListener('resize', resizeHandler)
   }
+  
+  // Auto-open submenu jika current path ada di sub-menu
+  menuItems.value.forEach(item => {
+    if (item.submenu && item.submenu.some(sub => route.path.startsWith(sub.path))) {
+      openSubmenus.value[item.path] = true
+    }
+  })
+})
+
+// Watch route changes untuk auto-expand submenu
+watch(() => route.path, (newPath) => {
+  menuItems.value.forEach(item => {
+    if (item.submenu && item.submenu.some(sub => newPath.startsWith(sub.path))) {
+      openSubmenus.value[item.path] = true
+    }
+  })
 })
 
 onBeforeUnmount(() => {

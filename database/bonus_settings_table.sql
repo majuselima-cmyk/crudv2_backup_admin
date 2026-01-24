@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS public.bonus_settings (
   
   -- Bonus Pasif
   reward_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+  reward_interval_minutes INTEGER NOT NULL DEFAULT 240, -- 240 menit = 1 hari
+  last_reward_calculated TIMESTAMPTZ DEFAULT NULL,
   multiplier_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
   multiplier_increment_percentage DECIMAL(5,2) NOT NULL DEFAULT 10.00,
   multiplier_increment_days INTEGER NOT NULL DEFAULT 7,

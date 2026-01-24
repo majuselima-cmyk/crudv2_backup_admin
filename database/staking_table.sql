@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.staking (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Member Information
-  member_id UUID NOT NULL,
+  member_id UUID NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
   
   -- Staking Information
   coin_amount DECIMAL(18,8) NOT NULL,

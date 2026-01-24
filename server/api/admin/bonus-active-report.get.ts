@@ -332,20 +332,36 @@ export default defineEventHandler(async (event) => {
         }
 
         // Calculate matching bonus level 1, 2, 3 from downline deposits
-        // Find downlines at each level
-        const level1Downlines = referredMemberIds
+        // Matching bonus Level 1 = downlines dari direct referrals (generasi kedua)
+        // Matching bonus Level 2 = downlines dari level 1 matching (generasi ketiga)
+        // Matching bonus Level 3 = downlines dari level 2 matching (generasi keempat)
         
-        // Get deposits from level 1 downlines
-        const level1Deposits = (completedDeposits || []).filter(dep => 
-          level1Downlines.includes(dep.member_id)
+        // Find level 1 matching downlines (downlines dari direct referrals)
+        // Direct referrals = referredMemberIds (generasi pertama, dapat referral bonus)
+        // Level 1 matching = downlines dari direct referrals (generasi kedua)
+        const level1MatchingDownlineIds = []
+        for (const directReferralId of referredMemberIds) {
+          const { data: level1MatchingDownlines } = await supabase
+            .from('members')
+            .select('id')
+            .eq('referred_by', directReferralId)
+          
+          if (level1MatchingDownlines && level1MatchingDownlines.length > 0) {
+            level1MatchingDownlineIds.push(...level1MatchingDownlines.map(m => m.id))
+          }
+        }
+        
+        // Get deposits from level 1 matching downlines
+        const level1MatchingDeposits = (completedDeposits || []).filter(dep => 
+          level1MatchingDownlineIds.includes(dep.member_id)
         )
-        const totalLevel1Deposit = level1Deposits.reduce((sum, dep) => 
+        const totalLevel1MatchingDeposit = level1MatchingDeposits.reduce((sum, dep) => 
           sum + parseFloat(dep.amount || 0), 0
         )
 
         // Calculate matching bonus level 1 if not already calculated from bonus deposits
-        if (totalLevel1Deposit > 0 && memberBonus.total_matching_level1 === 0) {
-          const matchingLevel1Total = (totalLevel1Deposit * matchingLevel1Percentage) / 100
+        if (totalLevel1MatchingDeposit > 0 && memberBonus.total_matching_level1 === 0) {
+          const matchingLevel1Total = (totalLevel1MatchingDeposit * matchingLevel1Percentage) / 100
           const matchingLevel1Balance = (matchingLevel1Total * referralBalancePercentage) / 100
           const matchingLevel1Coin = (matchingLevel1Total * referralCoinPercentage) / 100
 
@@ -357,7 +373,7 @@ export default defineEventHandler(async (event) => {
           memberBonus.total_balance += matchingLevel1Balance
 
           // Add detail transactions for matching level 1
-          for (const level1Deposit of level1Deposits) {
+          for (const level1Deposit of level1MatchingDeposits) {
             const depositAmount = parseFloat(level1Deposit.amount || 0)
             const matchingBonus = (depositAmount * matchingLevel1Percentage) / 100
             const matchingBonusBalance = (matchingBonus * referralBalancePercentage) / 100
@@ -384,30 +400,30 @@ export default defineEventHandler(async (event) => {
         }
 
         // Calculate matching bonus level 2 and 3
-        // Find level 2 downlines (downlines of level 1 downlines)
-        const level2DownlineIds = []
-        for (const level1DownlineId of level1Downlines) {
-          const { data: level2Downlines } = await supabase
+        // Find level 2 matching downlines (downlines dari level 1 matching downlines)
+        const level2MatchingDownlineIds = []
+        for (const level1MatchingDownlineId of level1MatchingDownlineIds) {
+          const { data: level2MatchingDownlines } = await supabase
             .from('members')
             .select('id')
-            .eq('referred_by', level1DownlineId)
+            .eq('referred_by', level1MatchingDownlineId)
           
-          if (level2Downlines && level2Downlines.length > 0) {
-            level2DownlineIds.push(...level2Downlines.map(m => m.id))
+          if (level2MatchingDownlines && level2MatchingDownlines.length > 0) {
+            level2MatchingDownlineIds.push(...level2MatchingDownlines.map(m => m.id))
           }
         }
 
-        if (level2DownlineIds.length > 0) {
-          const level2Deposits = (completedDeposits || []).filter(dep => 
-            level2DownlineIds.includes(dep.member_id)
+        if (level2MatchingDownlineIds.length > 0) {
+          const level2MatchingDeposits = (completedDeposits || []).filter(dep => 
+            level2MatchingDownlineIds.includes(dep.member_id)
           )
-          const totalLevel2Deposit = level2Deposits.reduce((sum, dep) => 
+          const totalLevel2MatchingDeposit = level2MatchingDeposits.reduce((sum, dep) => 
             sum + parseFloat(dep.amount || 0), 0
           )
 
           // Calculate matching bonus level 2
-          if (totalLevel2Deposit > 0 && memberBonus.total_matching_level2 === 0) {
-            const matchingLevel2Total = (totalLevel2Deposit * matchingLevel2Percentage) / 100
+          if (totalLevel2MatchingDeposit > 0 && memberBonus.total_matching_level2 === 0) {
+            const matchingLevel2Total = (totalLevel2MatchingDeposit * matchingLevel2Percentage) / 100
             const matchingLevel2Balance = (matchingLevel2Total * referralBalancePercentage) / 100
             const matchingLevel2Coin = (matchingLevel2Total * referralCoinPercentage) / 100
 
@@ -419,7 +435,7 @@ export default defineEventHandler(async (event) => {
             memberBonus.total_balance += matchingLevel2Balance
 
             // Add detail transactions for matching level 2
-            for (const level2Deposit of level2Deposits) {
+            for (const level2Deposit of level2MatchingDeposits) {
               const depositAmount = parseFloat(level2Deposit.amount || 0)
               const matchingBonus = (depositAmount * matchingLevel2Percentage) / 100
               const matchingBonusBalance = (matchingBonus * referralBalancePercentage) / 100
@@ -445,30 +461,30 @@ export default defineEventHandler(async (event) => {
             }
           }
 
-          // Find level 3 downlines (downlines of level 2 downlines)
-          const level3DownlineIds = []
-          for (const level2DownlineId of level2DownlineIds) {
-            const { data: level3Downlines } = await supabase
+          // Find level 3 matching downlines (downlines dari level 2 matching downlines)
+          const level3MatchingDownlineIds = []
+          for (const level2MatchingDownlineId of level2MatchingDownlineIds) {
+            const { data: level3MatchingDownlines } = await supabase
               .from('members')
               .select('id')
-              .eq('referred_by', level2DownlineId)
+              .eq('referred_by', level2MatchingDownlineId)
             
-            if (level3Downlines && level3Downlines.length > 0) {
-              level3DownlineIds.push(...level3Downlines.map(m => m.id))
+            if (level3MatchingDownlines && level3MatchingDownlines.length > 0) {
+              level3MatchingDownlineIds.push(...level3MatchingDownlines.map(m => m.id))
             }
           }
 
-          if (level3DownlineIds.length > 0) {
-            const level3Deposits = (completedDeposits || []).filter(dep => 
-              level3DownlineIds.includes(dep.member_id)
+          if (level3MatchingDownlineIds.length > 0) {
+            const level3MatchingDeposits = (completedDeposits || []).filter(dep => 
+              level3MatchingDownlineIds.includes(dep.member_id)
             )
-            const totalLevel3Deposit = level3Deposits.reduce((sum, dep) => 
+            const totalLevel3MatchingDeposit = level3MatchingDeposits.reduce((sum, dep) => 
               sum + parseFloat(dep.amount || 0), 0
             )
 
             // Calculate matching bonus level 3
-            if (totalLevel3Deposit > 0 && memberBonus.total_matching_level3 === 0) {
-              const matchingLevel3Total = (totalLevel3Deposit * matchingLevel3Percentage) / 100
+            if (totalLevel3MatchingDeposit > 0 && memberBonus.total_matching_level3 === 0) {
+              const matchingLevel3Total = (totalLevel3MatchingDeposit * matchingLevel3Percentage) / 100
               const matchingLevel3Balance = (matchingLevel3Total * referralBalancePercentage) / 100
               const matchingLevel3Coin = (matchingLevel3Total * referralCoinPercentage) / 100
 
@@ -480,7 +496,7 @@ export default defineEventHandler(async (event) => {
               memberBonus.total_balance += matchingLevel3Balance
 
               // Add detail transactions for matching level 3
-              for (const level3Deposit of level3Deposits) {
+              for (const level3Deposit of level3MatchingDeposits) {
                 const depositAmount = parseFloat(level3Deposit.amount || 0)
                 const matchingBonus = (depositAmount * matchingLevel3Percentage) / 100
                 const matchingBonusBalance = (matchingBonus * referralBalancePercentage) / 100

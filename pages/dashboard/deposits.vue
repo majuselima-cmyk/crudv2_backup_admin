@@ -68,32 +68,22 @@
             </div>
           </div>
 
-          <!-- Info Message (when no data but no error) -->
-          <div v-if="!errorMessage && deposits.length === 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div class="flex items-center gap-2">
-              <Icon name="information-circle" size="md" class="text-blue-600" />
-              <p class="text-sm text-blue-600">Belum ada data deposit. Klik tombol "Tambah Deposit" untuk menambah deposit baru.</p>
-            </div>
+          <!-- Add Deposit Button Section (Outside Table) -->
+          <div v-if="!errorMessage" class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800">
+              Daftar Deposit ({{ totalCount }})
+            </h2>
+            <button 
+              @click="openCreateModal"
+              class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105"
+            >
+              <Icon name="plus" size="sm" />
+              Tambah Deposit
+            </button>
           </div>
 
           <!-- Deposits Table -->
           <div v-if="!errorMessage" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <!-- Table Header -->
-          <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold text-gray-800">
-                Daftar Deposit ({{ totalCount }})
-              </h2>
-              <!-- Add Deposit Button -->
-              <button 
-                @click="openCreateModal"
-                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-105"
-              >
-                <Icon name="plus" size="sm" />
-                Tambah Deposit
-              </button>
-            </div>
-          </div>
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-gray-50 border-b border-gray-200">
@@ -112,11 +102,6 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-if="deposits.length === 0" class="hover:bg-gray-50">
-                  <td colspan="11" class="px-6 py-12 text-center text-sm text-gray-500">
-                    Belum ada data deposit
-                  </td>
-                </tr>
                 <tr
                   v-for="(deposit, index) in deposits"
                   :key="deposit.id"
@@ -940,7 +925,7 @@ const selectedStatus = ref('')
 const searchQuery = ref('')
 const searchTimeout = ref(null)
 const totalCount = ref(0)
-const limit = ref(50)
+const limit = ref(10000)
 const offset = ref(0)
 const errorMessage = ref('')
 
@@ -1026,10 +1011,6 @@ const fetchDeposits = async () => {
       totalCount.value = response.count || 0
       console.log('Deposits loaded:', deposits.value.length, 'items')
       console.log('Total count:', totalCount.value)
-      
-      if (deposits.value.length === 0 && totalCount.value === 0) {
-        errorMessage.value = 'Belum ada data deposit. Silakan tambah deposit baru.'
-      }
     } else {
       errorMessage.value = response?.message || 'Gagal memuat data deposit'
       deposits.value = []

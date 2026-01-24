@@ -92,15 +92,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Update member_coins: decrease staked_coins, increase available_coins
+    // Update member_coins: decrease staked_coins
+    // Note: available_coins will be calculated by trigger: available_coins = total_coins - staked_coins
     const newStakedCoins = Math.max(0, currentStakedCoins - coinAmount)
-    const newAvailableCoins = currentAvailableCoins + coinAmount
 
     const { error: updateCoinsError } = await supabase
       .from('member_coins')
       .update({
-        staked_coins: newStakedCoins,
-        available_coins: newAvailableCoins
+        staked_coins: newStakedCoins
       })
       .eq('member_id', staking.member_id)
 
@@ -120,19 +119,43 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Create staking history record for unstake
+    try {
+      await supabase
+        .from('staking_history')
+        .insert({
+          staking_id: stakingId,
+          member_id: staking.member_id,
+          action: 'unstaked',
+          coin_amount: coinAmount,
+          reward_percentage: parseFloat(staking.reward_percentage) || 0,
+          duration_minutes: parseInt(staking.duration_minutes) || 0,
+          staked_at: staking.staked_at,
+          unstaked_at: updatedStaking.unstaked_at,
+          notes: 'Unstake manual oleh admin'
+        })
+    } catch (historyError) {
+      console.error('[unstake] Error creating staking history:', historyError)
+      // Don't fail the request if history insert fails
+    }
+
     return {
       success: true,
       message: 'Unstaking berhasil dilakukan',
       data: updatedStaking
     }
   } catch (error: any) {
-    if (error && typeof error === 'object' && error.statusCode) {
+    console.error('[unstake] Error:', error)
+    
+    // Jika sudah H3Error, throw langsung
+    if (error && typeof error === 'object' && (error.statusCode || error._statusCode)) {
       throw error
     }
 
+    // Jika error lain, wrap dengan proper format
     throw createError({
-      statusCode: error?.statusCode || 500,
-      statusMessage: error?.message || 'Gagal melakukan unstaking'
+      statusCode: error?.statusCode || error?.data?.statusCode || 500,
+      statusMessage: error?.message || error?.data?.message || 'Gagal melakukan unstaking'
     })
   }
 })

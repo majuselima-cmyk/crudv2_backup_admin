@@ -195,7 +195,6 @@
               </div>
               
               <div class="p-6 space-y-6">
-                <!-- Reward Bonus -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
                     Reward Bonus (%)
@@ -213,6 +212,69 @@
                     <span class="text-gray-600 font-medium">%</span>
                   </div>
                   <p class="text-xs text-gray-500 mt-1">Bonus reward untuk aktivitas pasif</p>
+                </div>
+
+                <!-- Reward Interval (NEW) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Reward Calculation Interval
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="bonusForm.reward_interval_minutes"
+                      type="number"
+                      step="1"
+                      min="1"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <span class="text-gray-600 font-medium">Menit</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Interval untuk menghitung reward (default 240 menit = 1 hari)</p>
+                  <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-xs text-blue-700">
+                      <strong>Contoh:</strong>
+                      <br/>• 240 menit = 1 hari
+                      <br/>• 60 menit = 1 jam
+                      <br/>• 5 menit = 5 menit (untuk testing)
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Default Staking Duration -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Default Staking Duration
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="bonusForm.default_staking_duration_minutes"
+                      type="number"
+                      step="1"
+                      min="1"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <span class="text-gray-600 font-medium">Menit</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Durasi default untuk staking baru (dinamis)</p>
+                  <div class="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p class="text-xs text-purple-700 whitespace-pre-line">
+                      <strong>Konversi:</strong>
+                      {{ formatDurationConversion(bonusForm.default_staking_duration_minutes) }}
+                    </p>
+                  </div>
+                  <div v-if="bonusForm.default_staking_duration_minutes && bonusForm.default_staking_duration_minutes < 43200" class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-xs text-yellow-700 font-medium">
+                      ⚠️ Mode Testing: Durasi kurang dari 1 bulan (43,200 menit)
+                      <br/>Untuk production, gunakan minimal 43,200 menit
+                    </p>
+                  </div>
+                  <div v-else-if="bonusForm.default_staking_duration_minutes && bonusForm.default_staking_duration_minutes >= 43200" class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-xs text-green-700 font-medium">
+                      ✓ Mode Production: Durasi sesuai untuk production (≥ 1 bulan)
+                    </p>
+                  </div>
                 </div>
 
               <!-- Multiplier Bonus -->
@@ -255,25 +317,28 @@
                 <p class="text-xs text-gray-500 mt-1">Additional multiplier bonus percentage per hari</p>
               </div>
 
-              <!-- Multiplier Increment Days -->
+              <!-- Multiplier Increment Minutes -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Increment Period (Days)
+                  Increment Period (Minutes)
                 </label>
                 <div class="flex items-center gap-3">
                   <input
-                    v-model.number="bonusForm.multiplier_increment_days"
+                    v-model.number="bonusForm.multiplier_increment_minutes"
                     type="number"
                     step="1"
                     min="1"
                     required
                     class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
                   />
-                  <span class="text-gray-600 font-medium">Days</span>
+                  <span class="text-gray-600 font-medium">Minutes</span>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Jumlah hari untuk setiap increment</p>
+                <p class="text-xs text-gray-500 mt-1">Default: 10080 menit (7 hari). Untuk testing, ubah ke 5 menit.</p>
                 <p class="text-xs text-purple-600 mt-1 font-medium">
-                  Contoh: Base {{ bonusForm.multiplier_percentage }}% + Increment {{ bonusForm.multiplier_increment_percentage }}% setiap {{ bonusForm.multiplier_increment_days }} hari
+                  {{ (bonusForm.multiplier_increment_minutes / 60).toFixed(2) }} jam = {{ (bonusForm.multiplier_increment_minutes / 1440).toFixed(2) }} hari
+                </p>
+                <p class="text-xs text-purple-600 mt-1 font-medium">
+                  Contoh: Base {{ bonusForm.multiplier_percentage }}% + Increment {{ bonusForm.multiplier_increment_percentage }}% setiap {{ bonusForm.multiplier_increment_minutes }} menit
                 </p>
               </div>
               </div>
@@ -356,9 +421,11 @@ const bonusForm = ref({
   matching_level3_percentage: 2.00,
   loyalty_percentage: 10.00,
   reward_percentage: 0.50,
+  reward_interval_minutes: 240, // 240 menit = 1 hari
+  default_staking_duration_minutes: 43200, // 43200 menit = 1 bulan (30 hari)
   multiplier_percentage: 10.00,
   multiplier_increment_percentage: 10.00,
-  multiplier_increment_days: 7,
+  multiplier_increment_minutes: 10080, // 10080 menit = 7 hari, ubah ke 5 untuk testing
   is_active: true
 })
 
@@ -385,9 +452,11 @@ const fetchBonusSettings = async () => {
         matching_level3_percentage: parseFloat(response.data.matching_level3_percentage) || 2.00,
         loyalty_percentage: parseFloat(response.data.loyalty_percentage) || 10.00,
         reward_percentage: parseFloat(response.data.reward_percentage) || 0.50,
+        reward_interval_minutes: parseInt(response.data.reward_interval_minutes) || 240,
+        default_staking_duration_minutes: parseInt(response.data.default_staking_duration_minutes) || 43200,
         multiplier_percentage: parseFloat(response.data.multiplier_percentage) || 10.00,
         multiplier_increment_percentage: parseFloat(response.data.multiplier_increment_percentage) || 10.00,
-        multiplier_increment_days: parseInt(response.data.multiplier_increment_days) || 7,
+        multiplier_increment_minutes: parseInt(response.data.multiplier_increment_minutes) || 10080,
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
       }
     }
@@ -417,9 +486,11 @@ const handleSubmit = async () => {
         matching_level3_percentage: bonusForm.value.matching_level3_percentage,
         loyalty_percentage: bonusForm.value.loyalty_percentage,
         reward_percentage: bonusForm.value.reward_percentage,
+        reward_interval_minutes: bonusForm.value.reward_interval_minutes,
+        default_staking_duration_minutes: bonusForm.value.default_staking_duration_minutes,
         multiplier_percentage: bonusForm.value.multiplier_percentage,
         multiplier_increment_percentage: bonusForm.value.multiplier_increment_percentage,
-        multiplier_increment_days: bonusForm.value.multiplier_increment_days,
+        multiplier_increment_minutes: bonusForm.value.multiplier_increment_minutes,
         is_active: bonusForm.value.is_active
       }
     })
@@ -460,6 +531,15 @@ const getSplitTotalClass = () => {
   return 'text-red-600 font-semibold'
 }
 
+// Format duration conversion
+const formatDurationConversion = (minutes) => {
+  if (!minutes || minutes <= 0) return '• 0.00 jam\n• 0.00 hari\n• 0.00 bulan'
+  const hours = (minutes / 60).toFixed(2)
+  const days = (minutes / 1440).toFixed(2)
+  const months = (minutes / 43200).toFixed(2)
+  return `• ${hours} jam\n• ${days} hari\n• ${months} bulan`
+}
+
 // Reset form to default values
 const resetForm = () => {
   bonusForm.value = {
@@ -471,9 +551,11 @@ const resetForm = () => {
     matching_level3_percentage: 2.00,
     loyalty_percentage: 10.00,
     reward_percentage: 0.50,
+    reward_interval_minutes: 240,
+    default_staking_duration_minutes: 43200,
     multiplier_percentage: 10.00,
     multiplier_increment_percentage: 10.00,
-    multiplier_increment_days: 7,
+    multiplier_increment_minutes: 10080,
     is_active: true
   }
   submitError.value = ''
