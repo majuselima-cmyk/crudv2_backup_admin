@@ -75,9 +75,17 @@ export default defineEventHandler(async (event) => {
       { name: 'Matching Level 3', value: matching_level3_percentage },
       { name: 'Loyalty', value: loyalty_percentage },
       { name: 'Reward', value: reward_percentage },
-      { name: 'Multiplier', value: multiplier_percentage },
-      { name: 'Multiplier Increment', value: multiplier_increment_percentage }
+      { name: 'Multiplier', value: multiplier_percentage }
     ]
+
+    // Validate multiplier_increment_percentage (sekarang INTEGER menit, bukan persen)
+    const incrementIntervalMinutes = parseInt(multiplier_increment_percentage)
+    if (isNaN(incrementIntervalMinutes) || incrementIntervalMinutes < 1) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Multiplier increment interval harus minimal 1 menit'
+      })
+    }
 
     // Validate multiplier_increment_minutes (min 1 minute)
     const incrementMinutes = parseInt(multiplier_increment_minutes)
@@ -153,7 +161,7 @@ export default defineEventHandler(async (event) => {
           reward_interval_minutes: parseInt(reward_interval_minutes),
           default_staking_duration_minutes: stakingDuration,
           multiplier_percentage: parseFloat(multiplier_percentage),
-          multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
+          multiplier_increment_percentage: parseInt(multiplier_increment_percentage), // INTEGER menit, bukan DECIMAL persen
           multiplier_increment_minutes: parseInt(multiplier_increment_minutes),
           is_active: Boolean(is_active)
         })
@@ -185,7 +193,7 @@ export default defineEventHandler(async (event) => {
           reward_interval_minutes: parseInt(reward_interval_minutes),
           default_staking_duration_minutes: stakingDuration,
           multiplier_percentage: parseFloat(multiplier_percentage),
-          multiplier_increment_percentage: parseFloat(multiplier_increment_percentage),
+          multiplier_increment_percentage: parseInt(multiplier_increment_percentage), // INTEGER menit, bukan DECIMAL persen
           multiplier_increment_minutes: parseInt(multiplier_increment_minutes),
           is_active: Boolean(is_active)
         })

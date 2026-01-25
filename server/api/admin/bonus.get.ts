@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
             reward_percentage: 0.50,
             default_staking_duration_minutes: 43200,
             multiplier_percentage: 10.00,
-            multiplier_increment_percentage: 10.00,
+            multiplier_increment_percentage: 10080, // INTEGER menit (7 hari), bukan DECIMAL persen
             multiplier_increment_days: 7,
             is_active: true
           }

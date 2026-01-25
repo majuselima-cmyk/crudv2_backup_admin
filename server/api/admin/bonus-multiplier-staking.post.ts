@@ -39,6 +39,20 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    if (!reward_interval_minutes || parseInt(reward_interval_minutes) < 1) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'reward_interval_minutes wajib diisi dan minimal 1 menit'
+      })
+    }
+
+    if (!multiplier_increment_period_minutes || parseInt(multiplier_increment_period_minutes) < 1) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'multiplier_increment_period_minutes wajib diisi dan minimal 1 menit'
+      })
+    }
+
     const config = useRuntimeConfig()
     const supabaseUrl = config.public?.supabaseUrl || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
     const supabaseServiceKey = config.supabaseServiceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -91,6 +105,63 @@ export default defineEventHandler(async (event) => {
         statusCode: 500,
         statusMessage: stakingError.message || 'Gagal membuat bonus multiplier staking'
       })
+    }
+
+    // Auto-generate reward schedules untuk multiplier staking baru
+    try {
+      const coinAmount = parseFloat(coin_amount)
+      const basePercentage = parseFloat(multiplier_bonus_base_percentage)
+      const rewardInterval = parseInt(reward_interval_minutes) // Reward Calculation Interval (multiplier)
+      const stakingDuration = parseInt(multiplier_increment_period_minutes) // Default Staking Duration (multiplier)
+
+      // Calculate base reward amount
+      const baseRewardAmount = (coinAmount * basePercentage) / 100
+
+      // Calculate schedule times
+      const stakingStartDate = new Date(started_at || new Date().toISOString())
+      const stakingEndDate = new Date(stakingStartDate.getTime() + stakingDuration * 60 * 1000)
+
+      // Generate schedules - mulai dari started_at + interval
+      const schedules = []
+      let scheduleTime = new Date(stakingStartDate.getTime() + rewardInterval * 60 * 1000) // First reward after interval
+      let multiplierValue = 1.00 // Start dengan multiplier 1.00
+
+      while (scheduleTime <= stakingEndDate) {
+        // Calculate reward dengan multiplier (reward = base * multiplier_value)
+        const rewardAmount = baseRewardAmount * multiplierValue
+
+        schedules.push({
+          multiplier_staking_id: newMultiplierStaking.id,
+          member_id: member_id,
+          scheduled_time: scheduleTime.toISOString(),
+          reward_amount: rewardAmount,
+          multiplier_value: multiplierValue,
+          status: 'pending'
+        })
+
+        // Increment multiplier value untuk schedule berikutnya (optional: bisa increment per interval atau per period tertentu)
+        // Untuk sekarang, multiplier_value tetap 1.00 (bisa diubah logic increment jika diperlukan)
+        // multiplierValue += 0.1 // Contoh: increment 0.1 setiap interval
+
+        scheduleTime = new Date(scheduleTime.getTime() + rewardInterval * 60 * 1000)
+      }
+
+      // Bulk insert reward schedules
+      if (schedules.length > 0) {
+        const { error: scheduleError } = await supabase
+          .from('bonus_multiplier_schedules')
+          .insert(schedules)
+
+        if (scheduleError) {
+          console.error('[bonus-multiplier-staking.post] Error generating reward schedules:', scheduleError)
+          // Don't fail the request if schedule generation fails, just log the error
+        } else {
+          console.log(`[bonus-multiplier-staking.post] Generated ${schedules.length} reward schedules for multiplier staking ${newMultiplierStaking.id}`)
+        }
+      }
+    } catch (scheduleGenError) {
+      console.error('[bonus-multiplier-staking.post] Error in reward schedule generation:', scheduleGenError)
+      // Don't fail the request if schedule generation fails
     }
 
     return {

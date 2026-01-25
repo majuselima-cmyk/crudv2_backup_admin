@@ -277,10 +277,10 @@
                   </div>
                 </div>
 
-              <!-- Multiplier Bonus -->
+              <!-- Multiplier: Reward Bonus (%) = Multiplier Bonus Base (%) -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Multiplier Bonus Base (%)
+                  Reward Bonus (%) = Multiplier Bonus Base (%)
                 </label>
                 <div class="flex items-center gap-3">
                   <input
@@ -297,31 +297,12 @@
                 <p class="text-xs text-gray-500 mt-1">Base multiplier bonus percentage</p>
               </div>
 
-              <!-- Multiplier Increment -->
+              <!-- Reward Calculation Interval (multiplier) -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Multiplier Increment (%)
+                  Reward Calculation Interval (multiplier)
                 </label>
-                <div class="flex items-center gap-3">
-                  <input
-                    v-model.number="bonusForm.multiplier_increment_percentage"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    required
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                  <span class="text-gray-600 font-medium">%</span>
-                </div>
-                <p class="text-xs text-gray-500 mt-1">Additional multiplier bonus percentage per hari</p>
-              </div>
-
-              <!-- Multiplier Increment Minutes -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Increment Period (Minutes)
-                </label>
+                <p class="text-xs text-gray-500 mb-1">Interval perhitungan reward untuk staking multiplier, dalam menit. Bukan persen.</p>
                 <div class="flex items-center gap-3">
                   <input
                     v-model.number="bonusForm.multiplier_increment_minutes"
@@ -331,14 +312,34 @@
                     required
                     class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
                   />
-                  <span class="text-gray-600 font-medium">Minutes</span>
+                  <span class="text-gray-600 font-medium">Menit</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Default: 10080 menit (7 hari). Untuk testing, ubah ke 5 menit.</p>
                 <p class="text-xs text-purple-600 mt-1 font-medium">
                   {{ (bonusForm.multiplier_increment_minutes / 60).toFixed(2) }} jam = {{ (bonusForm.multiplier_increment_minutes / 1440).toFixed(2) }} hari
                 </p>
+              </div>
+
+              <!-- Default Staking Duration = Multiplier Increment Interval (Menit) multiplier -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Default Staking Duration = Multiplier Increment Interval (Menit) multiplier
+                </label>
+                <p class="text-xs text-gray-500 mb-1">Batas waktu staking multiplier, dalam menit. Bukan persen.</p>
+                <div class="flex items-center gap-3">
+                  <input
+                    v-model.number="bonusForm.multiplier_increment_percentage"
+                    type="number"
+                    step="1"
+                    min="1"
+                    required
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <span class="text-gray-600 font-medium">Menit</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Default: 10080 menit (7 hari). Contoh: Base {{ bonusForm.multiplier_percentage }}% setiap {{ bonusForm.multiplier_increment_percentage }} menit.</p>
                 <p class="text-xs text-purple-600 mt-1 font-medium">
-                  Contoh: Base {{ bonusForm.multiplier_percentage }}% + Increment {{ bonusForm.multiplier_increment_percentage }}% setiap {{ bonusForm.multiplier_increment_minutes }} menit
+                  {{ (bonusForm.multiplier_increment_percentage / 60).toFixed(2) }} jam = {{ (bonusForm.multiplier_increment_percentage / 1440).toFixed(2) }} hari
                 </p>
               </div>
               </div>
@@ -424,7 +425,7 @@ const bonusForm = ref({
   reward_interval_minutes: 240, // 240 menit = 1 hari
   default_staking_duration_minutes: 43200, // 43200 menit = 1 bulan (30 hari)
   multiplier_percentage: 10.00,
-  multiplier_increment_percentage: 10.00,
+  multiplier_increment_percentage: 10080, // INTEGER menit (7 hari) untuk interval staking multiplier, bukan DECIMAL persen
   multiplier_increment_minutes: 10080, // 10080 menit = 7 hari, ubah ke 5 untuk testing
   is_active: true
 })
@@ -455,7 +456,7 @@ const fetchBonusSettings = async () => {
         reward_interval_minutes: parseInt(response.data.reward_interval_minutes) || 240,
         default_staking_duration_minutes: parseInt(response.data.default_staking_duration_minutes) || 43200,
         multiplier_percentage: parseFloat(response.data.multiplier_percentage) || 10.00,
-        multiplier_increment_percentage: parseFloat(response.data.multiplier_increment_percentage) || 10.00,
+        multiplier_increment_percentage: parseInt(response.data.multiplier_increment_percentage, 10) || 10080, // INTEGER menit, bukan DECIMAL persen
         multiplier_increment_minutes: parseInt(response.data.multiplier_increment_minutes) || 10080,
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
       }
@@ -554,7 +555,7 @@ const resetForm = () => {
     reward_interval_minutes: 240,
     default_staking_duration_minutes: 43200,
     multiplier_percentage: 10.00,
-    multiplier_increment_percentage: 10.00,
+    multiplier_increment_percentage: 10080, // INTEGER menit (7 hari), bukan DECIMAL persen
     multiplier_increment_minutes: 10080,
     is_active: true
   }

@@ -1,6 +1,11 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-01-18',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
+  vite: {
+    server: {
+      hmr: false
+    }
+  },
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase'

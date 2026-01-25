@@ -179,7 +179,8 @@ const menuItems = computed(() => [
     submenu: [
       { path: '/dashboard/bonus-pasif/members', label: 'Member List' },
       { path: '/dashboard/bonus-pasif/staking', label: 'Staking' },
-      { path: '/dashboard/bonus-pasif/bonus-multiplier', label: 'Bonus Multiplier' }
+      { path: '/dashboard/bonus-pasif/bonus-multiplier', label: 'Bonus Multiplier' },
+      { path: '/dashboard/bonus-pasif/staking-multiplier', label: 'Staking Multiplier' }
     ]
   },
   {
