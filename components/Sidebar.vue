@@ -154,8 +154,8 @@ const menuItems = computed(() => [
   },
   {
     path: '/dashboard/members',
-    label: 'Bonus Aktif',
-    icon: 'chart-bar'
+    label: 'Member',
+    icon: 'user'
   },
   {
     path: '/dashboard/wallet',
@@ -166,6 +166,11 @@ const menuItems = computed(() => [
     path: '/dashboard/bonus',
     label: 'Bonus',
     icon: 'settings'
+  },
+  {
+    path: '/dashboard/bonus-active-report',
+    label: 'Bonus Aktif',
+    icon: 'chart-bar'
   },
   {
     path: '/dashboard/bonus-pasif',
