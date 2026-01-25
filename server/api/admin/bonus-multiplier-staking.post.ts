@@ -114,9 +114,6 @@ export default defineEventHandler(async (event) => {
       const rewardInterval = parseInt(reward_interval_minutes) // Reward Calculation Interval (multiplier)
       const stakingDuration = parseInt(multiplier_increment_period_minutes) // Default Staking Duration (multiplier)
 
-      // Calculate base reward amount
-      const baseRewardAmount = (coinAmount * basePercentage) / 100
-
       // Calculate schedule times
       const stakingStartDate = new Date(started_at || new Date().toISOString())
       const stakingEndDate = new Date(stakingStartDate.getTime() + stakingDuration * 60 * 1000)
@@ -124,30 +121,30 @@ export default defineEventHandler(async (event) => {
       // Generate schedules - mulai dari started_at + interval
       const schedules = []
       let scheduleTime = new Date(stakingStartDate.getTime() + rewardInterval * 60 * 1000) // First reward after interval
-      let multiplierValue = 1.00 // Start dengan multiplier 1.00
+      let currentAmount = coinAmount // Start with initial coin amount
 
       while (scheduleTime <= stakingEndDate) {
-        // Calculate reward dengan multiplier (reward = base * multiplier_value)
-        const rewardAmount = baseRewardAmount * multiplierValue
+        // Calculate reward dengan compounding: reward = current_amount * base_percentage
+        const rewardAmount = (currentAmount * basePercentage) / 100
 
         schedules.push({
           multiplier_staking_id: newMultiplierStaking.id,
           member_id: member_id,
           scheduled_time: scheduleTime.toISOString(),
           reward_amount: rewardAmount,
-          multiplier_value: multiplierValue,
+          multiplier_value: currentAmount, // Store current amount before reward
           status: 'pending'
         })
 
-        // Increment multiplier value untuk schedule berikutnya (optional: bisa increment per interval atau per period tertentu)
-        // Untuk sekarang, multiplier_value tetap 1.00 (bisa diubah logic increment jika diperlukan)
-        // multiplierValue += 0.1 // Contoh: increment 0.1 setiap interval
+        // Accumulate the reward to current amount for next calculation
+        currentAmount += rewardAmount
 
         scheduleTime = new Date(scheduleTime.getTime() + rewardInterval * 60 * 1000)
       }
 
       // Bulk insert reward schedules
       if (schedules.length > 0) {
+        console.log(`[bonus-multiplier-staking.post] Generated ${schedules.length} reward schedules for multiplier staking ${newMultiplierStaking.id}, coinAmount: ${coinAmount}, basePercentage: ${basePercentage}, rewardInterval: ${rewardInterval} min, stakingDuration: ${stakingDuration} min`)
         const { error: scheduleError } = await supabase
           .from('bonus_multiplier_schedules')
           .insert(schedules)
