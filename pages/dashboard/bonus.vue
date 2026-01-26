@@ -169,11 +169,11 @@
                 <!-- Loyalty Bonus -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Bonus Loyalty (%)
+                    Bonus Loyalty Level 0 (%)
                   </label>
                   <div class="flex items-center gap-3">
                     <input
-                      v-model.number="bonusForm.loyalty_percentage"
+                      v-model.number="bonusForm.loyalty_percentage_level0"
                       type="number"
                       step="0.01"
                       min="0"
@@ -183,7 +183,43 @@
                     />
                     <span class="text-gray-600 font-medium">%</span>
                   </div>
-                  <p class="text-xs text-gray-500 mt-1">Bonus untuk loyalitas member</p>
+                  <p class="text-xs text-gray-500 mt-1">Bonus untuk loyalitas member level 0 (default: 10%)</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Bonus Loyalty Level 1 (%)
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="bonusForm.loyalty_percentage_level1"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <span class="text-gray-600 font-medium">%</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Bonus untuk loyalitas member level 1 (default: 10%)</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Bonus Loyalty Level 2 (%)
+                  </label>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="bonusForm.loyalty_percentage_level2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      required
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                    />
+                    <span class="text-gray-600 font-medium">%</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Bonus untuk loyalitas member level 2 (default: 0.5%)</p>
                 </div>
               </div>
             </div>
@@ -420,7 +456,9 @@ const bonusForm = ref({
   matching_level1_percentage: 10.00,
   matching_level2_percentage: 5.00,
   matching_level3_percentage: 2.00,
-  loyalty_percentage: 10.00,
+  loyalty_percentage_level0: 10.00,
+  loyalty_percentage_level1: 10.00,
+  loyalty_percentage_level2: 0.50,
   reward_percentage: 0.50,
   reward_interval_minutes: 240, // 240 menit = 1 hari
   default_staking_duration_minutes: 43200, // 43200 menit = 1 bulan (30 hari)
@@ -451,7 +489,9 @@ const fetchBonusSettings = async () => {
         matching_level1_percentage: parseFloat(response.data.matching_level1_percentage) || 10.00,
         matching_level2_percentage: parseFloat(response.data.matching_level2_percentage) || 5.00,
         matching_level3_percentage: parseFloat(response.data.matching_level3_percentage) || 2.00,
-        loyalty_percentage: parseFloat(response.data.loyalty_percentage) || 10.00,
+        loyalty_percentage_level0: parseFloat(response.data.loyalty_percentage_level0) || 10.00,
+        loyalty_percentage_level1: parseFloat(response.data.loyalty_percentage_level1) || 10.00,
+        loyalty_percentage_level2: parseFloat(response.data.loyalty_percentage_level2) || 0.50,
         reward_percentage: parseFloat(response.data.reward_percentage) || 0.50,
         reward_interval_minutes: parseInt(response.data.reward_interval_minutes) || 240,
         default_staking_duration_minutes: parseInt(response.data.default_staking_duration_minutes) || 43200,
@@ -485,7 +525,9 @@ const handleSubmit = async () => {
         matching_level1_percentage: bonusForm.value.matching_level1_percentage,
         matching_level2_percentage: bonusForm.value.matching_level2_percentage,
         matching_level3_percentage: bonusForm.value.matching_level3_percentage,
-        loyalty_percentage: bonusForm.value.loyalty_percentage,
+        loyalty_percentage_level0: bonusForm.value.loyalty_percentage_level0,
+        loyalty_percentage_level1: bonusForm.value.loyalty_percentage_level1,
+        loyalty_percentage_level2: bonusForm.value.loyalty_percentage_level2,
         reward_percentage: bonusForm.value.reward_percentage,
         reward_interval_minutes: bonusForm.value.reward_interval_minutes,
         default_staking_duration_minutes: bonusForm.value.default_staking_duration_minutes,
@@ -550,7 +592,9 @@ const resetForm = () => {
     matching_level1_percentage: 10.00,
     matching_level2_percentage: 5.00,
     matching_level3_percentage: 2.00,
-    loyalty_percentage: 10.00,
+    loyalty_percentage_level0: 10.00,
+    loyalty_percentage_level1: 10.00,
+    loyalty_percentage_level2: 0.50,
     reward_percentage: 0.50,
     reward_interval_minutes: 240,
     default_staking_duration_minutes: 43200,

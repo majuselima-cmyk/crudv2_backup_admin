@@ -32,6 +32,110 @@
 
         <!-- Content when not loading -->
         <template v-else>
+          <!-- Rekap Withdraw Section -->
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Rekap Withdraw</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <!-- 1. Balance USDT -->
+              <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-blue-800 mb-2">1. Balance USDT</h3>
+                <div class="space-y-1 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Coin Deposit:</span>
+                    <span class="font-medium text-blue-600">{{ formatNumber(rekapData.balance.totalCoinDeposit) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">USDT:</span>
+                    <span class="font-medium text-blue-600">{{ formatCurrency(rekapData.balance.totalUsdt) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Bonus Aktif -->
+              <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-emerald-800 mb-2">2. Bonus Aktif</h3>
+                <div class="space-y-1 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Referral 80%:</span>
+                    <span class="font-medium">{{ formatCurrency(rekapData.bonusAktif.referral80Usdt) }} USDT</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>Coin:</span>
+                    <span>{{ formatNumber(rekapData.bonusAktif.referral80Coin) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Referral 20%:</span>
+                    <span class="font-medium">{{ formatNumber(rekapData.bonusAktif.referral20Coin) }} Coin</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>USDT:</span>
+                    <span>{{ formatCurrency(rekapData.bonusAktif.referral20Usdt) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Matching:</span>
+                    <span class="font-medium">{{ formatNumber(rekapData.bonusAktif.matchingCoin) }} Coin</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>USDT:</span>
+                    <span>{{ formatCurrency(rekapData.bonusAktif.matchingUsdt) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Loyalty:</span>
+                    <span class="font-medium">{{ formatNumber(rekapData.bonusAktif.loyaltyCoin) }} Coin</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>USDT:</span>
+                    <span>{{ formatCurrency(rekapData.bonusAktif.loyaltyUsdt) }}</span>
+                  </div>
+                  <div class="pt-1 mt-1 border-t border-emerald-300">
+                    <div class="flex justify-between font-semibold">
+                      <span class="text-emerald-800">Total Coin:</span>
+                      <span class="text-emerald-600">{{ formatNumber(rekapData.bonusAktif.totalCoin) }}</span>
+                    </div>
+                    <div class="flex justify-between font-semibold">
+                      <span class="text-emerald-800">Total USDT:</span>
+                      <span class="text-emerald-600">{{ formatCurrency(rekapData.bonusAktif.totalUsdt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Bonus Pasif -->
+              <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-purple-800 mb-2">3. Bonus Pasif</h3>
+                <div class="space-y-1 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Reward Staking:</span>
+                    <span class="font-medium">{{ formatNumber(rekapData.bonusPasif.stakingRewardCoin) }} Coin</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>USDT:</span>
+                    <span>{{ formatCurrency(rekapData.bonusPasif.stakingRewardUsdt) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Reward Multiplier:</span>
+                    <span class="font-medium">{{ formatNumber(rekapData.bonusPasif.multiplierRewardCoin) }} Coin</span>
+                  </div>
+                  <div class="flex justify-between text-gray-500">
+                    <span>USDT:</span>
+                    <span>{{ formatCurrency(rekapData.bonusPasif.multiplierRewardUsdt) }}</span>
+                  </div>
+                  <div class="pt-1 mt-1 border-t border-purple-300">
+                    <div class="flex justify-between font-semibold">
+                      <span class="text-purple-800">Total Coin:</span>
+                      <span class="text-purple-600">{{ formatNumber(rekapData.bonusPasif.totalCoin) }}</span>
+                    </div>
+                    <div class="flex justify-between font-semibold">
+                      <span class="text-purple-800">Total USDT:</span>
+                      <span class="text-purple-600">{{ formatCurrency(rekapData.bonusPasif.totalUsdt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Search and Filters Section -->
           <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -64,8 +168,7 @@
                 class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
               >
                 <option value="">Semua Tipe</option>
-                <option value="balance">Balance</option>
-                <option value="coin">Coin</option>
+                <option value="balance">Balance USDT</option>
                 <option value="bonus_aktif">Bonus Aktif</option>
                 <option value="bonus_pasif">Bonus Pasif</option>
               </select>
@@ -77,14 +180,6 @@
             <div class="flex items-center gap-2">
               <Icon name="x-circle" size="md" class="text-red-600" />
               <p class="text-sm text-red-600">{{ errorMessage }}</p>
-            </div>
-          </div>
-
-          <!-- Info Message (when no data but no error) -->
-          <div v-if="!errorMessage && withdraws.length === 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div class="flex items-center gap-2">
-              <Icon name="information-circle" size="md" class="text-blue-600" />
-              <p class="text-sm text-blue-600">Belum ada data withdraw.</p>
             </div>
           </div>
 
@@ -115,6 +210,7 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member ID</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (USDT)</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coin Amount</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dari Wallet (Admin)</th>
@@ -126,8 +222,8 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-if="withdraws.length === 0" class="hover:bg-gray-50">
-                  <td colspan="13" class="px-6 py-12 text-center text-sm text-gray-500">
+                <tr v-if="withdraws.length === 0">
+                  <td colspan="14" class="px-6 py-12 text-center text-sm text-gray-500">
                     Belum ada data withdraw
                   </td>
                 </tr>
@@ -177,23 +273,40 @@
                     <span
                       :class="[
                         'px-2 py-1 text-xs font-semibold rounded',
-                        withdraw.withdraw_type === 'balance'
+                        withdraw.withdraw_type === 'balance' || withdraw.withdraw_type === 'balance_deposit' || withdraw.withdraw_type === 'balance_bonus' || withdraw.withdraw_type === 'coin'
                           ? 'bg-blue-100 text-blue-800'
-                          : withdraw.withdraw_type === 'coin'
-                          ? 'bg-purple-100 text-purple-800'
                           : withdraw.withdraw_type === 'bonus_aktif'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-purple-100 text-purple-800'
                       ]"
                     >
                       {{ formatWithdrawType(withdraw.withdraw_type) }}
                     </span>
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span
+                      v-if="withdraw.withdraw_category"
+                      :class="[
+                        'px-2 py-1 text-xs font-semibold rounded',
+                        withdraw.withdraw_category === 'bonus_referral'
+                          ? 'bg-cyan-100 text-cyan-800'
+                          : withdraw.withdraw_category === 'coin'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-100 text-gray-800'
+                      ]"
+                    >
+                      {{ formatWithdrawCategory(withdraw.withdraw_category) }}
+                    </span>
+                    <span v-else class="text-gray-400 text-xs">-</span>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                     {{ formatCurrency(withdraw.amount) }} USDT
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                    <span v-if="withdraw.withdraw_type === 'coin'">
+                    <span v-if="withdraw.withdraw_type === 'bonus_aktif' || withdraw.withdraw_type === 'bonus_pasif'">
+                      {{ formatNumber(calculateCoinAmount(withdraw)) }} Coin
+                    </span>
+                    <span v-else-if="withdraw.withdraw_type === 'balance'">
                       {{ formatNumber(calculateCoinAmount(withdraw)) }} Coin
                     </span>
                     <span v-else class="text-gray-400">-</span>
@@ -440,33 +553,43 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Type *</label>
-              <select
-                v-model="createForm.withdraw_type"
-                required
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="balance">Balance</option>
-                <option value="coin">Coin</option>
-                <option value="bonus_aktif">Bonus Aktif</option>
-                <option value="bonus_pasif">Bonus Pasif</option>
-              </select>
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Withdraw Type *</label>
+            <select
+              v-model="createForm.withdraw_type"
+              @change="onWithdrawTypeChange"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="balance">Balance USDT</option>
+              <option value="coin">Coin</option>
+            </select>
+          </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT) *</label>
-              <input
-                v-model="createForm.amount"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                placeholder="0.00"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
+          <div v-if="createForm.withdraw_type === 'balance'">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Amount (USDT) *</label>
+            <input
+              v-model="createForm.amount"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              placeholder="0.00"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div v-if="createForm.withdraw_type === 'coin'">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Amount (Coin) *</label>
+            <input
+              v-model="createForm.amount_coin"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              placeholder="0.00"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+            />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -588,29 +711,182 @@
             />
           </div>
 
-          <!-- Coin Preview (if withdraw_type = coin) -->
+          <!-- Balance USDT Info -->
           <div 
-            v-if="createForm.withdraw_type === 'coin' && createForm.amount && selectedMemberInfo && selectedMemberInfo.coinPrice > 0" 
+            v-if="createForm.withdraw_type === 'balance' && selectedMemberInfo" 
             class="p-4 bg-blue-50 border border-blue-200 rounded-lg"
           >
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mb-3">
               <div>
-                <p class="text-sm text-gray-600 mb-1">Jumlah Coin yang akan ditarik:</p>
-                <p class="text-2xl font-bold text-blue-600">
+                <p class="text-sm text-gray-600 mb-1">Sisa Bonus Referral Ready WD:</p>
+                <p class="text-2xl font-bold text-green-600">
+                  {{ formatCurrency(Math.max(0, ((selectedMemberInfo.referral_bonus_usdt || 0) + (selectedMemberInfo.matching_bonus_usdt || 0)) - (selectedMemberInfo.withdraw_bonus_referral_usdt || 0))) }} <span class="text-base text-gray-600">USDT</span>
+                </p>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-blue-200 space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Saldo Bonus Referral USDT:</span>
+                <span class="font-medium text-blue-600">{{ formatCurrency((selectedMemberInfo.referral_bonus_usdt || 0) + (selectedMemberInfo.matching_bonus_usdt || 0)) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Total USDT WD:</span>
+                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.withdraw_bonus_referral_usdt || 0) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Total Bonus Referral 80%:</span>
+                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.referral_bonus_usdt || 0) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Total Bonus Matching 80%:</span>
+                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.matching_bonus_usdt || 0) }} USDT</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coin Info -->
+          <div 
+            v-if="createForm.withdraw_type === 'coin' && selectedMemberInfo" 
+            class="p-4 bg-purple-50 border border-purple-200 rounded-lg"
+          >
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600 font-medium">Coin Ready WD:</span>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-semibold inline-flex items-center gap-1">
+                  <span>{{ formatCoin(Math.max(0, (selectedMemberInfo.total_coin_member || 0) - ((selectedMemberInfo.total_staking_coin || 0) + (selectedMemberInfo.total_staking_multiplier_coin || 0)))) }}</span>
+                  <span v-if="coinSettings" class="text-green-600">{{ coinSettings.coin_code }}</span>
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600 font-medium">WD Coin:</span>
+                <span class="font-semibold">{{ formatCoin(selectedMemberInfo.withdraw_coin || 0) }}</span>
+                <span v-if="coinSettings" class="text-gray-500 text-xs ml-1">{{ coinSettings.coin_code }}</span>
+              </div>
+              <div class="flex items-center justify-between text-sm pb-2 border-b border-purple-200">
+                <span class="text-gray-600 font-medium">Sisa Coin:</span>
+                <span class="font-semibold">{{ formatCoin(Math.max(0, (Math.max(0, (selectedMemberInfo.total_coin_member || 0) - ((selectedMemberInfo.total_staking_coin || 0) + (selectedMemberInfo.total_staking_multiplier_coin || 0)))) - (selectedMemberInfo.withdraw_coin || 0))) }}</span>
+                <span v-if="coinSettings" class="text-gray-500 text-xs ml-1">{{ coinSettings.coin_code }}</span>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-2">
+                <span class="text-gray-600">Convert USDT:</span>
+                <span class="font-medium text-purple-600">
+                  {{ formatCurrency((Math.max(0, (Math.max(0, (selectedMemberInfo.total_coin_member || 0) - ((selectedMemberInfo.total_staking_coin || 0) + (selectedMemberInfo.total_staking_multiplier_coin || 0)))) - (selectedMemberInfo.withdraw_coin || 0))) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT
+                </span>
+              </div>
+              <div class="text-xs text-gray-500">
+                <p>Harga Coin: {{ formatCurrency(selectedMemberInfo.coinPrice || 0.5) }} USDT/Coin ({{ formatMemberType(selectedMemberInfo.member_type) }})</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bonus Aktif Info -->
+          <div 
+            v-if="createForm.withdraw_type === 'bonus_aktif' && selectedMemberInfo" 
+            class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Total Coin Bonus Aktif:</p>
+                <p class="text-2xl font-bold text-emerald-600">
+                  {{ formatNumber(selectedMemberInfo.total_bonus_aktif_coin || 0) }} <span class="text-base text-gray-600">Coin</span>
+                </p>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-emerald-200 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Bonus Referral 80%:</span>
+                <span class="font-medium">{{ formatCurrency(selectedMemberInfo.referral_bonus_usdt || 0) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Bonus Referral 20% Coin:</span>
+                <span class="font-medium">{{ formatNumber(selectedMemberInfo.referral_bonus_coin || 0) }} Coin = {{ formatCurrency((selectedMemberInfo.referral_bonus_coin || 0) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Bonus Matching Coin:</span>
+                <span class="font-medium">{{ formatNumber(selectedMemberInfo.matching_bonus_coin || 0) }} Coin = {{ formatCurrency((selectedMemberInfo.matching_bonus_coin || 0) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Bonus Loyalty Coin:</span>
+                <span class="font-medium">{{ formatNumber(selectedMemberInfo.loyalty_bonus || 0) }} Coin = {{ formatCurrency((selectedMemberInfo.loyalty_bonus || 0) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT</span>
+              </div>
+              <div class="pt-2 mt-2 border-t border-emerald-300">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <span class="text-emerald-800">Total USDT (Convert):</span>
+                  <span class="text-emerald-600">{{ formatCurrency(selectedMemberInfo.total_bonus_aktif_usdt || 0) }} USDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bonus Pasif Info -->
+          <div 
+            v-if="createForm.withdraw_type === 'bonus_pasif' && selectedMemberInfo" 
+            class="p-4 bg-purple-50 border border-purple-200 rounded-lg"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="text-sm text-gray-600 mb-1">Total Coin Bonus Pasif:</p>
+                <p class="text-2xl font-bold text-purple-600">
+                  {{ formatNumber(selectedMemberInfo.total_bonus_pasif_coin || 0) }} <span class="text-base text-gray-600">Coin</span>
+                </p>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-purple-200 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Reward Staking:</span>
+                <span class="font-medium">{{ formatNumber(selectedMemberInfo.staking_reward_paid || 0) }} Coin = {{ formatCurrency((selectedMemberInfo.staking_reward_paid || 0) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-gray-600">Reward Staking Multiplier:</span>
+                <span class="font-medium">{{ formatNumber(selectedMemberInfo.staking_multiplier_reward_paid || 0) }} Coin = {{ formatCurrency((selectedMemberInfo.staking_multiplier_reward_paid || 0) * (selectedMemberInfo.coinPrice || 0.5)) }} USDT</span>
+              </div>
+              <div class="pt-2 mt-2 border-t border-purple-300">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <span class="text-purple-800">Total USDT (Convert):</span>
+                  <span class="text-purple-600">{{ formatCurrency(selectedMemberInfo.total_bonus_pasif_usdt || 0) }} USDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coin Preview (if withdraw_type = bonus_aktif, bonus_pasif) -->
+          <div 
+            v-if="(createForm.withdraw_type === 'bonus_aktif' || createForm.withdraw_type === 'bonus_pasif') && createForm.amount && selectedMemberInfo && selectedMemberInfo.coinPrice > 0" 
+            :class="[
+              'p-4 border rounded-lg',
+              createForm.withdraw_type === 'bonus_aktif' ? 'bg-emerald-50 border-emerald-200' :
+              'bg-purple-50 border-purple-200'
+            ]"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="text-sm text-gray-600 mb-1">
+                  <span v-if="createForm.withdraw_type === 'bonus_aktif'">Jumlah Coin Bonus Aktif yang akan ditarik:</span>
+                  <span v-else>Jumlah Coin Bonus Pasif yang akan ditarik:</span>
+                </p>
+                <p :class="[
+                  'text-2xl font-bold',
+                  createForm.withdraw_type === 'bonus_aktif' ? 'text-emerald-600' :
+                  'text-purple-600'
+                ]">
                   {{ formatNumber(coinPreview) }} <span class="text-base text-gray-600">Coin</span>
                 </p>
               </div>
             </div>
-            <div class="mt-3 pt-3 border-t border-blue-200">
+            <div :class="[
+              'mt-3 pt-3 border-t',
+              createForm.withdraw_type === 'bonus_aktif' ? 'border-emerald-200' :
+              'border-purple-200'
+            ]">
               <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-gray-600">Amount:</span>
+                <span class="text-gray-600">Amount (USDT):</span>
                 <span class="font-medium">{{ formatCurrency(createForm.amount) }} USDT</span>
               </div>
               <div class="flex items-center justify-between text-xs mb-1">
                 <span class="text-gray-600">Jenis Member:</span>
                 <span class="font-medium">{{ formatMemberType(selectedMemberInfo.member_type) }}</span>
               </div>
-              <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center justify-between text-xs mb-1">
                 <span class="text-gray-600">Harga Coin:</span>
                 <span class="font-medium">{{ formatCurrency(selectedMemberInfo.coinPrice) }} USDT/Coin</span>
               </div>
@@ -703,8 +979,7 @@
                 required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
               >
-                <option value="balance">Balance</option>
-                <option value="coin">Coin</option>
+                <option value="balance">Balance USDT</option>
                 <option value="bonus_aktif">Bonus Aktif</option>
                 <option value="bonus_pasif">Bonus Pasif</option>
               </select>
@@ -955,6 +1230,34 @@ const limit = ref(50)
 const offset = ref(0)
 const errorMessage = ref('')
 
+// Rekap data
+const rekapData = ref({
+  balance: {
+    totalCoinDeposit: 0,
+    totalUsdt: 0
+  },
+  bonusAktif: {
+    referral80Coin: 0,
+    referral80Usdt: 0,
+    referral20Coin: 0,
+    referral20Usdt: 0,
+    matchingCoin: 0,
+    matchingUsdt: 0,
+    loyaltyCoin: 0,
+    loyaltyUsdt: 0,
+    totalCoin: 0,
+    totalUsdt: 0
+  },
+  bonusPasif: {
+    stakingRewardCoin: 0,
+    stakingRewardUsdt: 0,
+    multiplierRewardCoin: 0,
+    multiplierRewardUsdt: 0,
+    totalCoin: 0,
+    totalUsdt: 0
+  }
+})
+
 // Modal states
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -980,9 +1283,10 @@ const createForm = ref({
   member_id: '',
   withdraw_type: 'balance',
   amount: '',
+  amount_coin: '',
   wallet_address: '',
   wallet_network: 'BEP20',
-  wallet_model: '',
+  wallet_model: 'USDT_BEP20',
   notes: '',
   status: 'pending'
 })
@@ -1036,10 +1340,6 @@ const fetchWithdraws = async () => {
       totalCount.value = response.count || 0
       console.log('Withdraws loaded:', withdraws.value.length, 'items')
       console.log('Total count:', totalCount.value)
-      
-      if (withdraws.value.length === 0 && totalCount.value === 0) {
-        errorMessage.value = 'Belum ada data withdraw.'
-      }
     } else {
       errorMessage.value = response?.message || 'Gagal memuat data withdraw'
       withdraws.value = []
@@ -1094,15 +1394,44 @@ const formatNumber = (value) => {
   }
 }
 
+// Format coin (same as formatNumber but with 2 decimal places)
+const formatCoin = (amount) => {
+  try {
+    if (amount === null || amount === undefined || amount === '') return '0.00'
+    if (amount === 0) return '0.00'
+    const numValue = typeof amount === 'number' ? amount : parseFloat(amount)
+    if (isNaN(numValue)) return '0.00'
+    return new Intl.NumberFormat('id-ID', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numValue)
+  } catch (error) {
+    console.error('Error formatting coin:', error)
+    return '0.00'
+  }
+}
+
 // Format withdraw type
 const formatWithdrawType = (type) => {
   const types = {
-    balance: 'Balance',
-    coin: 'Coin',
+    balance_deposit: 'Balance USDT',
+    balance_bonus: 'Balance USDT',
+    balance: 'Balance USDT',
+    coin: 'Balance USDT', // Legacy support
     bonus_aktif: 'Bonus Aktif',
     bonus_pasif: 'Bonus Pasif'
   }
   return types[type] || type
+}
+
+// Format withdraw category
+const formatWithdrawCategory = (category) => {
+  if (!category) return '-'
+  const categories = {
+    bonus_referral: 'Bonus Referral',
+    coin: 'Coin'
+  }
+  return categories[category] || category
 }
 
 // Format date
@@ -1305,8 +1634,10 @@ const calculateCoinAmount = (withdraw) => {
   try {
     if (!withdraw || !withdraw.amount) return 0
     
-    // Only calculate for coin withdraw type
-    if (withdraw.withdraw_type !== 'coin') return 0
+    // Calculate for bonus_aktif, bonus_pasif, and balance (if needed)
+    if (withdraw.withdraw_type !== 'bonus_aktif' && 
+        withdraw.withdraw_type !== 'bonus_pasif' && 
+        withdraw.withdraw_type !== 'balance') return 0
     
     if (!withdraw.members || !coinSettings.value) return 0
     
@@ -1335,10 +1666,46 @@ const onMemberChange = () => {
   const member = members.value.find(m => m.id === createForm.value.member_id)
   if (member) {
     const coinPrice = getCoinPriceByMemberType(member.member_type)
+    
+    // Calculate total bonus aktif coin
+    const totalBonusAktifCoin = (member.referral_bonus_coin || 0) + 
+                                 (member.matching_bonus_coin || 0) + 
+                                 (member.loyalty_bonus || 0)
+    const totalBonusAktifUsdt = totalBonusAktifCoin * coinPrice
+    
+    // Calculate total bonus pasif coin
+    const totalBonusPasifCoin = (member.staking_reward_paid || 0) + 
+                                (member.staking_multiplier_reward_paid || 0)
+    const totalBonusPasifUsdt = totalBonusPasifCoin * coinPrice
+    
     selectedMemberInfo.value = {
       ...member,
-      coinPrice
+      coinPrice,
+      total_deposit_usdt: member.total_deposit_usdt || 0,
+      total_coin_from_deposits: member.total_coin_from_deposits || 0,
+      total_balance: member.total_balance || 0,
+      total_withdraw: member.total_withdraw || 0,
+      remaining_balance: member.remaining_balance || 0,
+      coin_balance: member.coin_balance || 0,
+      staking_reward_paid: member.staking_reward_paid || 0,
+      staking_multiplier_reward_paid: member.staking_multiplier_reward_paid || 0,
+      referral_bonus_usdt: member.referral_bonus_usdt || 0,
+      matching_bonus_usdt: member.matching_bonus_usdt || 0,
+      referral_bonus_coin: member.referral_bonus_coin || 0,
+      matching_bonus_coin: member.matching_bonus_coin || 0,
+      loyalty_bonus: member.loyalty_bonus || 0,
+      withdraw_bonus_referral_usdt: member.withdraw_bonus_referral_usdt || 0,
+      total_coin_member: member.total_coin_member || 0,
+      total_staking_coin: member.total_staking_coin || 0,
+      total_staking_multiplier_coin: member.total_staking_multiplier_coin || 0,
+      withdraw_coin: member.withdraw_coin || 0,
+      total_bonus_aktif_coin: totalBonusAktifCoin,
+      total_bonus_aktif_usdt: totalBonusAktifUsdt,
+      total_bonus_pasif_coin: totalBonusPasifCoin,
+      total_bonus_pasif_usdt: totalBonusPasifUsdt
     }
+    // Auto-fill amount based on withdraw type
+    autoFillAmount()
     calculateCoinPreview()
   } else {
     selectedMemberInfo.value = null
@@ -1346,10 +1713,32 @@ const onMemberChange = () => {
   }
 }
 
+// Auto-fill amount based on withdraw type
+const autoFillAmount = () => {
+  if (!selectedMemberInfo.value) return
+  
+  const withdrawType = createForm.value.withdraw_type
+  const coinPrice = selectedMemberInfo.value.coinPrice || 0.5
+  
+  if (withdrawType === 'balance') {
+    // Auto-fill dengan sisa bonus referral yang ready (Saldo - Total WD)
+    const saldoBonusReferral = (selectedMemberInfo.value.referral_bonus_usdt || 0) + (selectedMemberInfo.value.matching_bonus_usdt || 0)
+    const totalWdBonusReferral = selectedMemberInfo.value.withdraw_bonus_referral_usdt || 0
+    const sisaBonusReferral = Math.max(0, saldoBonusReferral - totalWdBonusReferral)
+    createForm.value.amount = sisaBonusReferral
+  } else if (withdrawType === 'coin') {
+    // Auto-fill dengan sisa coin
+    const coinReadyWD = Math.max(0, (selectedMemberInfo.value.total_coin_member || 0) - ((selectedMemberInfo.value.total_staking_coin || 0) + (selectedMemberInfo.value.total_staking_multiplier_coin || 0)))
+    const sisaCoin = Math.max(0, coinReadyWD - (selectedMemberInfo.value.withdraw_coin || 0))
+    createForm.value.amount_coin = sisaCoin
+  }
+}
+
 // Calculate coin preview
 const calculateCoinPreview = () => {
   if (
-    createForm.value.withdraw_type === 'coin' &&
+    (createForm.value.withdraw_type === 'bonus_aktif' || 
+     createForm.value.withdraw_type === 'bonus_pasif') &&
     createForm.value.amount &&
     selectedMemberInfo.value &&
     selectedMemberInfo.value.coinPrice > 0
@@ -1446,6 +1835,15 @@ const onEditNetworkChange = () => {
   }
 }
 
+// Handle withdraw type change
+const onWithdrawTypeChange = () => {
+  // Auto-fill amount based on withdraw type
+  if (selectedMemberInfo.value) {
+    autoFillAmount()
+  }
+  calculateCoinPreview()
+}
+
 // Handle network change
 const onNetworkChange = () => {
   adminWalletAddress.value = ''
@@ -1482,8 +1880,24 @@ watch(() => createForm.value.amount, () => {
 })
 
 watch(() => createForm.value.withdraw_type, () => {
+  // Auto-fill amount when withdraw type changes
+  if (selectedMemberInfo.value) {
+    autoFillAmount()
+  }
   calculateCoinPreview()
 })
+
+// Fetch rekap data
+const fetchRekapData = async () => {
+  try {
+    const response = await $fetch('/api/admin/withdraw-recap')
+    if (response && response.success && response.data) {
+      rekapData.value = response.data
+    }
+  } catch (error) {
+    console.error('Failed to fetch rekap data:', error)
+  }
+}
 
 // Create Modal
 const openCreateModal = () => {
@@ -1491,6 +1905,7 @@ const openCreateModal = () => {
     member_id: '',
     withdraw_type: 'balance',
     amount: '',
+    amount_coin: '',
     wallet_address: '',
     wallet_network: 'BEP20',
     wallet_model: 'USDT_BEP20',
@@ -1518,7 +1933,8 @@ const closeCreateModal = () => {
     wallet_network: 'BEP20',
     wallet_model: 'USDT_BEP20',
     notes: '',
-    status: 'pending'
+    status: 'pending',
+    amount_coin: ''
   }
   createError.value = ''
   selectedMemberInfo.value = null
@@ -1536,7 +1952,10 @@ const handleCreate = async () => {
       body: {
         member_id: createForm.value.member_id,
         withdraw_type: createForm.value.withdraw_type,
-        amount: createForm.value.amount,
+        amount: createForm.value.withdraw_type === 'coin' 
+          ? (parseFloat(createForm.value.amount_coin || 0) * (selectedMemberInfo.value?.coinPrice || 0.5))
+          : createForm.value.amount,
+        amount_coin: createForm.value.withdraw_type === 'coin' ? createForm.value.amount_coin : undefined,
         wallet_address: createForm.value.wallet_address,
         wallet_network: createForm.value.wallet_network,
         wallet_model: createForm.value.wallet_model || undefined,
@@ -1692,6 +2111,7 @@ onMounted(() => {
   fetchWithdraws()
   fetchMembers()
   fetchCoinSettings()
+  fetchRekapData()
 })
 </script>
 

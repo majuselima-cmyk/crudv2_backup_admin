@@ -1,7 +1,7 @@
 /**
  * Update bonus settings
  * PUT /api/admin/bonus
- * Body: { referral_percentage, referral_balance_percentage, referral_coin_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage, reward_percentage, reward_interval_minutes, multiplier_percentage, is_active }
+ * Body: { referral_percentage, referral_balance_percentage, referral_coin_percentage, matching_level1_percentage, matching_level2_percentage, matching_level3_percentage, loyalty_percentage_level0, loyalty_percentage_level1, loyalty_percentage_level2, reward_percentage, reward_interval_minutes, multiplier_percentage, is_active }
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -15,7 +15,9 @@ export default defineEventHandler(async (event) => {
       matching_level1_percentage,
       matching_level2_percentage,
       matching_level3_percentage,
-      loyalty_percentage,
+      loyalty_percentage_level0,
+      loyalty_percentage_level1,
+      loyalty_percentage_level2,
       reward_percentage,
       reward_interval_minutes,
       default_staking_duration_minutes,
@@ -33,7 +35,9 @@ export default defineEventHandler(async (event) => {
       matching_level1_percentage === undefined ||
       matching_level2_percentage === undefined ||
       matching_level3_percentage === undefined ||
-      loyalty_percentage === undefined ||
+      loyalty_percentage_level0 === undefined ||
+      loyalty_percentage_level1 === undefined ||
+      loyalty_percentage_level2 === undefined ||
       reward_percentage === undefined ||
       reward_interval_minutes === undefined || // NEW
       multiplier_percentage === undefined ||
@@ -73,7 +77,9 @@ export default defineEventHandler(async (event) => {
       { name: 'Matching Level 1', value: matching_level1_percentage },
       { name: 'Matching Level 2', value: matching_level2_percentage },
       { name: 'Matching Level 3', value: matching_level3_percentage },
-      { name: 'Loyalty', value: loyalty_percentage },
+      { name: 'Loyalty Level 0', value: loyalty_percentage_level0 },
+      { name: 'Loyalty Level 1', value: loyalty_percentage_level1 },
+      { name: 'Loyalty Level 2', value: loyalty_percentage_level2 },
       { name: 'Reward', value: reward_percentage },
       { name: 'Multiplier', value: multiplier_percentage }
     ]
@@ -156,7 +162,9 @@ export default defineEventHandler(async (event) => {
           matching_level1_percentage: parseFloat(matching_level1_percentage),
           matching_level2_percentage: parseFloat(matching_level2_percentage),
           matching_level3_percentage: parseFloat(matching_level3_percentage),
-          loyalty_percentage: parseFloat(loyalty_percentage),
+          loyalty_percentage_level0: parseFloat(loyalty_percentage_level0),
+          loyalty_percentage_level1: parseFloat(loyalty_percentage_level1),
+          loyalty_percentage_level2: parseFloat(loyalty_percentage_level2),
           reward_percentage: parseFloat(reward_percentage),
           reward_interval_minutes: parseInt(reward_interval_minutes),
           default_staking_duration_minutes: stakingDuration,
@@ -188,7 +196,9 @@ export default defineEventHandler(async (event) => {
           matching_level1_percentage: parseFloat(matching_level1_percentage),
           matching_level2_percentage: parseFloat(matching_level2_percentage),
           matching_level3_percentage: parseFloat(matching_level3_percentage),
-          loyalty_percentage: parseFloat(loyalty_percentage),
+          loyalty_percentage_level0: parseFloat(loyalty_percentage_level0),
+          loyalty_percentage_level1: parseFloat(loyalty_percentage_level1),
+          loyalty_percentage_level2: parseFloat(loyalty_percentage_level2),
           reward_percentage: parseFloat(reward_percentage),
           reward_interval_minutes: parseInt(reward_interval_minutes),
           default_staking_duration_minutes: stakingDuration,

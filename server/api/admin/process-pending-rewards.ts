@@ -177,6 +177,40 @@ export default defineEventHandler(async (event) => {
           continue
         }
 
+        // Update member_coins.total_coins saat reward paid
+        // rewardAmount sudah dalam coin, langsung tambahkan ke total_coins
+        // Trigger akan otomatis update available_coins = total_coins - staked_coins
+        try {
+          // Get current total_coins
+          const { data: currentCoins, error: fetchCoinsError } = await supabase
+            .from('member_coins')
+            .select('total_coins')
+            .eq('member_id', schedule.member_id)
+            .single()
+          
+          if (!fetchCoinsError && currentCoins) {
+            const currentTotalCoins = parseFloat(String(currentCoins.total_coins || 0)) || 0
+            const newTotalCoins = currentTotalCoins + rewardAmount
+            
+            const { error: updateCoinsError } = await supabase
+              .from('member_coins')
+              .update({ total_coins: newTotalCoins })
+              .eq('member_id', schedule.member_id)
+            
+            if (updateCoinsError) {
+              console.error(`[process-pending-rewards] Error updating member_coins.total_coins:`, updateCoinsError)
+              // Tidak throw error, hanya log karena reward history sudah ter-update
+            } else {
+              console.log(`[process-pending-rewards] Updated member_coins.total_coins for member ${schedule.member_id}, added ${rewardAmount} coins (${currentTotalCoins} → ${newTotalCoins})`)
+            }
+          } else {
+            console.warn(`[process-pending-rewards] Member coins not found for member ${schedule.member_id}, skipping total_coins update`)
+          }
+        } catch (coinsUpdateError: any) {
+          console.error(`[process-pending-rewards] Error updating member_coins:`, coinsUpdateError)
+          // Tidak throw error, hanya log karena reward history sudah ter-update
+        }
+
         processedCount++
         console.log(`[process-pending-rewards] Processed schedule ${schedule.id} for staking ${schedule.staking_id}, reward: ${rewardAmount}`)
 

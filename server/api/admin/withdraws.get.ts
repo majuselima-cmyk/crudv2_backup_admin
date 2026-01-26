@@ -58,9 +58,14 @@ export default defineEventHandler(async (event) => {
         fieldQueryBuilder = fieldQueryBuilder.eq('status', status)
       }
       
-      if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
-        fieldQueryBuilder = fieldQueryBuilder.eq('withdraw_type', withdraw_type)
-      }
+        if (withdraw_type && ['balance', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+          // Support legacy types
+          if (withdraw_type === 'balance') {
+            fieldQueryBuilder = fieldQueryBuilder.in('withdraw_type', ['balance', 'balance_deposit', 'balance_bonus', 'coin'])
+          } else {
+            fieldQueryBuilder = fieldQueryBuilder.eq('withdraw_type', withdraw_type)
+          }
+        }
       
       const { data: withdrawsFromFields } = await fieldQueryBuilder
       
@@ -77,8 +82,13 @@ export default defineEventHandler(async (event) => {
           memberQueryBuilder = memberQueryBuilder.eq('status', status)
         }
         
-        if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
-          memberQueryBuilder = memberQueryBuilder.eq('withdraw_type', withdraw_type)
+        if (withdraw_type && ['balance', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+          // Support legacy types
+          if (withdraw_type === 'balance') {
+            memberQueryBuilder = memberQueryBuilder.in('withdraw_type', ['balance', 'balance_deposit', 'balance_bonus', 'coin'])
+          } else {
+            memberQueryBuilder = memberQueryBuilder.eq('withdraw_type', withdraw_type)
+          }
         }
         
         const { data: memberWithdraws } = await memberQueryBuilder
@@ -111,8 +121,13 @@ export default defineEventHandler(async (event) => {
         queryBuilder = queryBuilder.eq('status', status)
       }
 
-      if (withdraw_type && ['balance', 'coin', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
-        queryBuilder = queryBuilder.eq('withdraw_type', withdraw_type)
+      if (withdraw_type && ['balance', 'bonus_aktif', 'bonus_pasif'].includes(withdraw_type)) {
+        // Support legacy types
+        if (withdraw_type === 'balance') {
+          queryBuilder = queryBuilder.in('withdraw_type', ['balance', 'balance_deposit', 'balance_bonus', 'coin'])
+        } else {
+          queryBuilder = queryBuilder.eq('withdraw_type', withdraw_type)
+        }
       }
 
       const { data: normalWithdraws, error, count } = await queryBuilder
