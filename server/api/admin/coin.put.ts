@@ -20,6 +20,8 @@ export default defineEventHandler(async (event) => {
       chart_max_price,
       logo_url,
       favicon_url,
+      header_landing,
+      email_support,
       website_name,
       website_title,
       is_active
@@ -145,6 +147,8 @@ export default defineEventHandler(async (event) => {
       chart_max_price: parseFloat(chart_max_price),
       logo_url: logo_url && logo_url.trim() ? logo_url.trim() : null,
       favicon_url: favicon_url && favicon_url.trim() ? favicon_url.trim() : null,
+      header_landing: header_landing && header_landing.trim() ? header_landing.trim() : null,
+      email_support: email_support && email_support.trim() ? email_support.trim() : null,
       website_name: website_name.trim(),
       website_title: website_title.trim(),
       is_active: Boolean(is_active)
@@ -201,4 +205,3 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
-

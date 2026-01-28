@@ -212,6 +212,11 @@ const menuItems = computed(() => [
     path: '/dashboard/settings',
     label: 'Pengaturan',
     icon: 'settings'
+  },
+  {
+    path: '/dashboard/contact-us',
+    label: 'Hubungi Kami',
+    icon: 'chat'
   }
 ])
 

@@ -55,6 +55,8 @@ export default defineEventHandler(async (event) => {
           chart_max_price: 0.6,
           logo_url: null,
           favicon_url: null,
+          header_landing: null,
+          email_support: null,
           website_name: 'localhost:3000',
           website_title: 'CRUD App',
           is_active: true

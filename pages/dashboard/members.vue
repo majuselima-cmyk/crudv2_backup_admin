@@ -87,8 +87,8 @@
                   <th class="text-right py-3.5 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200">
                     Coin Deposit {{ coinInfo ? coinInfo.coin_code : '' }}
                   </th>
-                  <th class="text-right py-3.5 px-4 text-sm font-bold text-gray-800 uppercase tracking-wider border-2 border-emerald-300 bg-emerald-100 min-w-[180px]">Bonus Aktif</th>
-                  <th class="text-right py-3.5 px-4 text-sm font-bold text-gray-800 uppercase tracking-wider border-2 border-purple-300 bg-purple-100 min-w-[180px]">Bonus Pasif</th>
+                  <th class="text-right py-3.5 px-4 text-sm font-bold text-gray-800 uppercase tracking-wider border-2 border-purple-300 bg-purple-100 min-w-[180px]">Bonus Aktif</th>
+                  <th class="text-right py-3.5 px-4 text-sm font-bold text-gray-800 uppercase tracking-wider border-2 border-emerald-300 bg-emerald-100 min-w-[180px]">Bonus Pasif</th>
                   <th class="text-right py-3.5 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200">
                     Status Coin Withdraw
                   </th>
@@ -189,6 +189,41 @@
                     <span class="font-semibold">{{ formatCoin(member.total_coin_from_deposits || 0) }}</span>
                     <span v-if="coinInfo" class="text-gray-500 text-xs ml-1">{{ coinInfo.coin_code }}</span>
                   </td>
+                  <td class="py-4 px-4 bg-purple-50/50 border-2 border-purple-200 min-w-[180px]">
+                    <div class="flex flex-col gap-2">
+                      <!-- USDT (selalu tampilkan, termasuk 0) + convert ke coin -->
+                      <div 
+                        class="text-xs flex flex-col items-end gap-0.5"
+                        title="Bonus Aktif USDT (Referral 80% + Matching 80%)"
+                      >
+                        <div class="flex items-center justify-end gap-1.5">
+                          <span class="text-blue-600 font-bold whitespace-nowrap">USDT:</span> 
+                          <span class="text-gray-800 font-semibold">{{ formatCurrency((member.referral_bonus_usdt || 0) + (member.matching_bonus_usdt || 0)) }}</span>
+                        </div>
+                        <div class="flex items-center justify-end gap-1 text-gray-500 text-xs">
+                          <span>convert ke coin =</span>
+                          <span class="font-medium">{{ formatCoin(getMemberCoinPrice(member) > 0 ? ((member.referral_bonus_usdt || 0) + (member.matching_bonus_usdt || 0)) / getMemberCoinPrice(member) : 0) }}</span>
+                        </div>
+                      </div>
+                      <!-- Coin (selalu tampilkan, termasuk 0) -->
+                      <div 
+                        class="text-xs flex items-center justify-end gap-1.5"
+                        title="Bonus Aktif Coin (Referral 20% + Matching 20%)"
+                      >
+                        <span class="text-purple-600 font-bold whitespace-nowrap">Coin {{ coinInfo ? coinInfo.coin_code : '' }}:</span> 
+                        <span class="text-gray-800 font-semibold">{{ formatCoin((member.referral_bonus_coin || 0) + (member.matching_bonus_coin || 0)) }}</span>
+                      </div>
+                      <!-- Loyalty (selalu tampilkan, termasuk 0) -->
+                      <div 
+                        class="text-xs flex items-center justify-end gap-1.5"
+                        title="Bonus Loyalty (dari multiplier rewards downline)"
+                      >
+                        <span class="text-orange-600 font-bold whitespace-nowrap">Loyalty:</span> 
+                        <span class="text-gray-800 font-semibold">{{ formatCoin(member.loyalty_bonus || 0) }}</span>
+                        <span v-if="coinInfo" class="text-gray-500 text-xs">{{ coinInfo.coin_code }}</span>
+                      </div>
+                    </div>
+                  </td>
                   <td class="py-4 px-4 bg-emerald-50/50 border-2 border-emerald-200 min-w-[180px]">
                     <div class="flex flex-col gap-2">
                       <!-- Staking Reward -->
@@ -207,41 +242,6 @@
                       >
                         <span class="text-indigo-600 font-bold whitespace-nowrap">Reward Staking Multiplier:</span> 
                         <span class="text-gray-800 font-semibold">{{ formatCoin(member.staking_multiplier_reward_paid || 0) }}</span>
-                        <span v-if="coinInfo" class="text-gray-500 text-xs">{{ coinInfo.coin_code }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="py-4 px-4 bg-purple-50/50 border-2 border-purple-200 min-w-[180px]">
-                    <div class="flex flex-col gap-2">
-                      <!-- USDT (selalu tampilkan, termasuk 0) + convert ke coin -->
-                      <div 
-                        class="text-xs flex flex-col items-end gap-0.5"
-                        title="Bonus Pasif USDT (Referral 80% + Matching 80%)"
-                      >
-                        <div class="flex items-center justify-end gap-1.5">
-                          <span class="text-blue-600 font-bold whitespace-nowrap">USDT:</span> 
-                          <span class="text-gray-800 font-semibold">{{ formatCurrency((member.referral_bonus_usdt || 0) + (member.matching_bonus_usdt || 0)) }}</span>
-                        </div>
-                        <div class="flex items-center justify-end gap-1 text-gray-500 text-xs">
-                          <span>convert ke coin =</span>
-                          <span class="font-medium">{{ formatCoin(getMemberCoinPrice(member) > 0 ? ((member.referral_bonus_usdt || 0) + (member.matching_bonus_usdt || 0)) / getMemberCoinPrice(member) : 0) }}</span>
-                        </div>
-                      </div>
-                      <!-- Coin (selalu tampilkan, termasuk 0) -->
-                      <div 
-                        class="text-xs flex items-center justify-end gap-1.5"
-                        title="Bonus Pasif Coin (Referral 20% + Matching 20%)"
-                      >
-                        <span class="text-purple-600 font-bold whitespace-nowrap">Coin {{ coinInfo ? coinInfo.coin_code : '' }}:</span> 
-                        <span class="text-gray-800 font-semibold">{{ formatCoin((member.referral_bonus_coin || 0) + (member.matching_bonus_coin || 0)) }}</span>
-                      </div>
-                      <!-- Loyalty (selalu tampilkan, termasuk 0) -->
-                      <div 
-                        class="text-xs flex items-center justify-end gap-1.5"
-                        title="Bonus Loyalty (dari multiplier rewards downline)"
-                      >
-                        <span class="text-orange-600 font-bold whitespace-nowrap">Loyalty:</span> 
-                        <span class="text-gray-800 font-semibold">{{ formatCoin(member.loyalty_bonus || 0) }}</span>
                         <span v-if="coinInfo" class="text-gray-500 text-xs">{{ coinInfo.coin_code }}</span>
                       </div>
                     </div>

@@ -4,7 +4,6 @@
  * Body: { email?, username?, status?, password?, referral_code?, member_type?, bonus_aktif_withdraw_enabled?, bonus_pasif_withdraw_enabled? }
  */
 import { createClient } from '@supabase/supabase-js'
-import * as bcryptjs from 'bcryptjs'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -120,10 +119,8 @@ export default defineEventHandler(async (event) => {
           statusMessage: 'Password minimal 6 karakter'
         })
       }
-      // Hash password
-      const saltRounds = 10
-      const hashedPassword = bcryptjs.hashSync(password, saltRounds)
-      updateData.password = hashedPassword
+      // Save password as plain text (no hashing)
+      updateData.password = password
     }
 
     // Check if member exists and get current data

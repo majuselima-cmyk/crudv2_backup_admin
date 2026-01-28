@@ -22,7 +22,9 @@ import {
   HomeIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  Bars3Icon
+  Bars3Icon,
+  ChatBubbleLeftRightIcon,
+  ClockIcon
 } from '@heroicons/vue/24/outline'
 
 import {
@@ -68,6 +70,8 @@ const iconMap = {
   'settings': Cog6ToothIcon,
   'logout': ArrowRightOnRectangleIcon,
   'menu': Bars3Icon,
+  'chat': ChatBubbleLeftRightIcon,
+  'clock': ClockIcon,
   // Solid icons
   'check-circle': CheckCircleIcon,
   'x-circle': XCircleIcon,

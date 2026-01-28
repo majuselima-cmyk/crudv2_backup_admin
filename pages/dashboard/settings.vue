@@ -117,19 +117,7 @@
             </div>
           </div>
 
-          <!-- Account Actions -->
-          <div class="bg-white border border-red-300 rounded-lg p-6 shadow-sm">
-            <h2 class="text-xl font-semibold text-red-600 mb-4">Zona Bahaya</h2>
-            
-            <div class="space-y-4">
-              <button
-                @click="handleDeleteAccount"
-                class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition border border-red-200"
-              >
-                Hapus Akun
-              </button>
-            </div>
-          </div>
+
         </div>
       </main>
     </div>
@@ -271,11 +259,5 @@ onMounted(() => {
   fetchProfile()
 })
 
-const handleDeleteAccount = () => {
-  if (confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.')) {
-    // Handle delete account logic
-    console.log('Hapus akun')
-    alert('Permintaan penghapusan akun dikirim')
-  }
-}
+
 </script>

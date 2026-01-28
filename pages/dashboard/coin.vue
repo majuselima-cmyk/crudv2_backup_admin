@@ -144,6 +144,34 @@
                   <p class="text-xs text-gray-500 mt-1">Nama website/domain (contoh: localhost:3000, example.com)</p>
                 </div>
 
+                <!-- Email Support -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Support
+                  </label>
+                  <input
+                    v-model="coinForm.email_support"
+                    type="email"
+                    placeholder="support@example.com"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Email support yang akan ditampilkan di landing page (opsional)</p>
+                </div>
+
+                <!-- Header Landing Text -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Header Landing Text
+                  </label>
+                  <input
+                    v-model="coinForm.header_landing"
+                    type="text"
+                    placeholder="Contoh: The Best Crypto Investment"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">Text header yang akan ditampilkan di landing page (opsional)</p>
+                </div>
+
                 <!-- Website Title -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -479,6 +507,8 @@ const coinForm = ref({
   chart_max_price: 0.6, // Harga tertinggi untuk chart
   logo_url: '',
   favicon_url: '',
+  header_landing: '',
+  email_support: '',
   website_name: 'localhost:3000',
   website_title: 'CRUD App',
   is_active: true
@@ -540,6 +570,8 @@ const fetchCoinSettings = async () => {
         chart_max_price: response.data.chart_max_price ? parseFloat(response.data.chart_max_price) : 0.6,
         logo_url: response.data.logo_url || '',
         favicon_url: response.data.favicon_url || '',
+        header_landing: response.data.header_landing || '',
+        email_support: response.data.email_support || '',
         website_name: response.data.website_name || 'localhost:3000',
         website_title: response.data.website_title || 'CRUD App',
         is_active: response.data.is_active !== undefined ? response.data.is_active : true
@@ -586,6 +618,8 @@ const handleSubmit = async () => {
         chart_max_price: coinForm.value.chart_max_price,
         logo_url: coinForm.value.logo_url || null,
         favicon_url: coinForm.value.favicon_url || null,
+        header_landing: coinForm.value.header_landing || null,
+        email_support: coinForm.value.email_support || null,
         website_name: coinForm.value.website_name || 'localhost:3000',
         website_title: coinForm.value.website_title || 'CRUD App',
         is_active: coinForm.value.is_active
@@ -623,6 +657,8 @@ const resetForm = () => {
     chart_max_price: 0.6,
     logo_url: '',
     favicon_url: '',
+    header_landing: '',
+    email_support: '',
     website_name: 'localhost:3000',
     website_title: 'CRUD App',
     is_active: true

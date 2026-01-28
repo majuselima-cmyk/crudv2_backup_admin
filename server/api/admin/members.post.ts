@@ -4,7 +4,6 @@
  * Body: { email, username, password, referral_code?, member_type?, status?, referred_by?, bonus_aktif_withdraw_enabled?, bonus_pasif_withdraw_enabled? }
  */
 import { createClient } from '@supabase/supabase-js'
-import * as bcryptjs from 'bcryptjs'
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -165,14 +164,10 @@ export default defineEventHandler(async (event) => {
     // Validate status
     const finalStatus = ['active', 'inactive', 'pending'].includes(status) ? status : 'active'
 
-    // Hash password
-    const saltRounds = 10
-    const hashedPassword = bcryptjs.hashSync(password, saltRounds)
-
     const insertData: Record<string, unknown> = {
       email: normalizedEmail,
       username: normalizedUsername,
-      password: hashedPassword,
+      password: password,
       referral_code: finalReferralCode,
       member_type: finalMemberType,
       status: finalStatus,
