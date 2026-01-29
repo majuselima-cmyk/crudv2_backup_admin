@@ -160,12 +160,12 @@ const menuItems = computed(() => [
   {
     path: '/dashboard/wallet',
     label: 'Wallet',
-    icon: 'settings'
+    icon: 'wallet'
   },
   {
     path: '/dashboard/bonus',
     label: 'Bonus',
-    icon: 'settings'
+    icon: 'gift'
   },
   {
     path: '/dashboard/bonus-active-report',
@@ -186,17 +186,17 @@ const menuItems = computed(() => [
   {
     path: '/dashboard/coin',
     label: 'Coin',
-    icon: 'settings'
+    icon: 'coin'
   },
   {
     path: '/dashboard/gas-free-withdraw',
     label: 'Gas Free Withdraw',
-    icon: 'settings'
+    icon: 'cash'
   },
   {
     path: '/dashboard/minimal-deposit',
     label: 'Minimal Deposit',
-    icon: 'settings'
+    icon: 'card'
   },
   {
     path: '/dashboard/deposits',
@@ -209,9 +209,19 @@ const menuItems = computed(() => [
     icon: 'document'
   },
   {
+    path: '/dashboard/tools',
+    label: 'Tools Manager',
+    icon: 'document-text'
+  },
+  {
     path: '/dashboard/settings',
     label: 'Pengaturan',
     icon: 'settings'
+  },
+  {
+    path: '/dashboard/email',
+    label: 'Email',
+    icon: 'email'
   },
   {
     path: '/dashboard/contact-us',

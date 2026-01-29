@@ -24,46 +24,42 @@
       <!-- Page Content -->
       <main class="p-4 lg:p-8">
         <div class="space-y-6">
-          <!-- Header Content & Search -->
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <p class="text-gray-500">Daftar pesan masuk dari pengguna</p>
-            </div>
-            
-            <div class="flex items-center gap-3 w-full md:w-auto">
-              <!-- Search -->
-              <div class="relative w-full md:w-64">
-                <Icon name="search" size="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  v-model="search"
-                  type="text" 
-                  placeholder="Cari pesan..." 
-                  class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:font-normal"
+          <!-- Table Card -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <h2 class="text-lg font-semibold text-gray-800">Daftar Pesan</h2>
+              
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <!-- Search -->
+                <div class="relative flex-1 sm:flex-none">
+                  <Icon name="search" size="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    v-model="search"
+                    type="text" 
+                    placeholder="Cari pesan..." 
+                    class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full lg:w-64"
+                  >
+                </div>
+
+                 <!-- Add Data Button -->
+                <button 
+                  @click="openCreateModal"
+                  class="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition text-sm whitespace-nowrap"
                 >
+                  <Icon name="plus" size="sm" />
+                  <span>Tambah Data</span>
+                </button>
               </div>
-
-               <!-- Add Data Button -->
-              <button 
-                @click="openCreateModal"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:scale-105 whitespace-nowrap"
-              >
-                <Icon name="plus" size="sm" class="text-white" />
-                <span class="font-medium text-sm">Tambah Data</span>
-              </button>
             </div>
-          </div>
-
-          <!-- Table Content -->
-          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="bg-gray-50/50 border-b border-gray-100">
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengirim</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Subjek & Pesan</th>
-                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+              <table class="w-full text-left text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th class="px-6 py-4 font-semibold text-gray-900">Tanggal</th>
+                    <th class="px-6 py-4 font-semibold text-gray-900">Pengirim</th>
+                    <th class="px-6 py-4 font-semibold text-gray-900">Subjek & Pesan</th>
+                    <th class="px-6 py-4 font-semibold text-gray-900">Status</th>
+                    <th class="px-6 py-4 font-semibold text-gray-900 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -152,42 +148,25 @@
               </table>
             </div>
 
-             <!-- Pagination -->
-            <div v-if="totalPages > 1" class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-              <p class="text-xs text-gray-500">
-                Menampilkan <span class="font-medium text-gray-900">{{ (currentPage - 1) * limit + 1 }}</span> - <span class="font-medium text-gray-900">{{ Math.min(currentPage * limit, totalCount) }}</span> dari <span class="font-medium text-gray-900">{{ totalCount }}</span>
-              </p>
-              <div class="flex items-center gap-2">
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <span class="text-sm text-gray-600">
+                Menampilkan {{ (currentPage - 1) * limit + 1 }} - {{ Math.min(currentPage * limit, totalCount) }} dari {{ totalCount }} data
+              </span>
+              <div class="flex gap-2">
                 <button 
-                  @click="prevPage"
+                  @click="prevPage" 
                   :disabled="currentPage === 1"
-                  class="p-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  <Icon name="chevron-left" size="sm" />
+                  Previous
                 </button>
-                <div class="flex items-center gap-1">
-                  <template v-for="p in visiblePages" :key="p">
-                    <span v-if="p === '...'" class="text-xs text-gray-400 px-2">...</span>
-                    <button 
-                      v-else
-                      @click="currentPage = p"
-                      :class="[
-                        'w-8 h-8 rounded-lg text-xs font-medium transition-all',
-                        currentPage === p 
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-200' 
-                          : 'text-gray-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200'
-                      ]"
-                    >
-                      {{ p }}
-                    </button>
-                  </template>
-                </div>
                 <button 
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="p-2 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  @click="nextPage" 
+                  :disabled="currentPage >= totalPages"
+                  class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  <Icon name="chevron-right" size="sm" />
+                  Next
                 </button>
               </div>
             </div>

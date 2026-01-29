@@ -24,7 +24,18 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   ChatBubbleLeftRightIcon,
-  ClockIcon
+  ClockIcon,
+  WalletIcon,
+  GiftIcon,
+  ChartBarIcon,
+  StarIcon,
+  CurrencyDollarIcon,
+  CreditCardIcon,
+  DocumentTextIcon,
+  DocumentIcon,
+  BanknotesIcon,
+  PresentationChartBarIcon,
+  MapIcon
 } from '@heroicons/vue/24/outline'
 
 import {
@@ -72,6 +83,17 @@ const iconMap = {
   'menu': Bars3Icon,
   'chat': ChatBubbleLeftRightIcon,
   'clock': ClockIcon,
+  'wallet': WalletIcon,
+  'gift': GiftIcon,
+  'chart-bar': ChartBarIcon,
+  'star': StarIcon,
+  'coin': CurrencyDollarIcon,
+  'card': CreditCardIcon,
+  'document': DocumentIcon,
+  'document-text': DocumentTextIcon,
+  'cash': BanknotesIcon,
+  'presentation-chart-bar': PresentationChartBarIcon,
+  'map': MapIcon,
   // Solid icons
   'check-circle': CheckCircleIcon,
   'x-circle': XCircleIcon,

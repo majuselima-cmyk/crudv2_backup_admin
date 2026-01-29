@@ -71,73 +71,281 @@
           </div>
         </div>
 
-        <!-- Deposit Chart Card -->
-        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 mb-8">
-          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50/50 to-transparent">
-            <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-              <div class="w-1 h-6 bg-gradient-to-b from-emerald-600 to-emerald-500 rounded-full"></div>
-              Grafik Deposit (7 Hari Terakhir)
-            </h2>
-          </div>
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Deposit Chart Card -->
+          <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+            <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50/50 to-transparent">
+              <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                <div class="w-1 h-6 bg-gradient-to-b from-emerald-600 to-emerald-500 rounded-full"></div>
+                Grafik Depo
+              </h2>
+            </div>
 
-          <div class="p-6">
-            <div v-if="loadingChart" class="flex items-center justify-center py-12">
-              <div class="text-gray-400">Memuat data...</div>
-            </div>
-            <div v-else-if="depositChartData.length === 0" class="flex items-center justify-center py-12">
-              <div class="text-center">
-                <Icon name="document-text" size="lg" class="text-gray-300 mx-auto mb-2" />
-                <p class="text-gray-400">Tidak ada data deposit</p>
+            <div class="p-6">
+              <div v-if="loadingChart" class="flex items-center justify-center py-12">
+                <div class="text-gray-400">Memuat data...</div>
               </div>
-            </div>
-            <div v-else class="space-y-4">
+              <div v-else-if="depositChartData.length === 0" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                  <Icon name="document-text" size="lg" class="text-gray-300 mx-auto mb-2" />
+                  <p class="text-gray-400">Tidak ada data deposit</p>
+                </div>
+              </div>
+              <div v-else class="space-y-4">
               <!-- Chart Container -->
-              <div class="relative h-64 flex items-end justify-between gap-2">
-                <div 
-                  v-for="(item, index) in depositChartData" 
-                  :key="index"
-                  class="flex-1 flex flex-col items-center group"
-                >
-                  <div class="relative w-full flex flex-col items-center">
+              <div class="relative h-64">
+                <!-- Line SVG -->
+                <svg class="absolute inset-0 w-full h-full overflow-visible z-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <!-- Completed Area -->
+                  <path
+                    :d="getChartAreaPath(depositChartData, 'heightCompleted')"
+                    class="text-emerald-500 opacity-10"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <!-- Completed Line -->
+                  <path
+                    :d="getChartPath(depositChartData, 'heightCompleted')"
+                    fill="none"
+                    stroke="#10B981" 
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"
+                    class="z-10 relative"
+                  />
+                  <!-- Pending Line -->
+                  <path
+                    :d="getChartPath(depositChartData, 'heightPending')"
+                    fill="none"
+                    stroke="#fbbf24" 
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-dasharray="4 4"
+                    vector-effect="non-scaling-stroke"
+                    class="z-10 relative"
+                  />
+                </svg>
+
+                <!-- Interaction Layer -->
+                <div class="absolute inset-0 flex items-end justify-between z-10 w-full h-full">
+                  <div 
+                    v-for="(item, index) in depositChartData" 
+                    :key="index"
+                    class="flex-1 flex flex-col items-center justify-end h-full group relative"
+                  >
+                    <!-- Dot on Completed line -->
+                    <div 
+                      class="absolute w-3 h-3 bg-white border-2 border-emerald-500 rounded-full transition-transform group-hover:scale-125 z-20"
+                      :style="{ bottom: `${item.heightCompleted}%`, marginBottom: '-6px' }"
+                    ></div>
+                    
+                     <!-- Dot on Pending line (only if value > 0) -->
+                    <div 
+                      v-if="item.amountPending > 0"
+                      class="absolute w-2 h-2 bg-white border-2 border-amber-400 rounded-full transition-transform group-hover:scale-125 z-20"
+                      :style="{ bottom: `${item.heightPending}%`, marginBottom: '-4px' }"
+                    ></div>
+
+                    <!-- Vertical Hover Line -->
+                    <div class="absolute bottom-0 w-px bg-gray-300 border-l border-gray-300 border-dashed h-full opacity-0 group-hover:opacity-50 transition-opacity pointer-events-none z-0"></div>
+
                     <!-- Tooltip -->
-                    <div class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <div class="absolute bottom-[calc(100%-2rem)] mb-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none" :style="{ bottom: `${Math.max(item.heightCompleted, item.heightPending)}%`, marginBottom: '12px' }">
                       <div class="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
-                        <div class="font-semibold">{{ item.date }}</div>
-                        <div class="text-emerald-300">{{ formatCurrency(item.amount) }} USDT</div>
+                        <div class="font-semibold border-b border-gray-700 pb-1 mb-1">{{ item.date }}</div>
+                        <div class="flex items-center justify-between gap-3 text-emerald-300">
+                          <span>Completed:</span>
+                          <span class="font-mono">{{ formatCurrency(item.amountCompleted) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 text-amber-400">
+                          <span>Pending:</span>
+                          <span class="font-mono">{{ formatCurrency(item.amountPending) }}</span>
+                        </div>
                       </div>
                       <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                     </div>
                     
-                    <!-- Bar -->
-                    <div 
-                      class="w-full bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-t-lg hover:from-emerald-600 hover:to-emerald-500 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
-                      :style="{ height: `${item.height}%`, minHeight: item.amount > 0 ? '4px' : '0' }"
-                    ></div>
-                  </div>
-                  
-                  <!-- Label -->
-                  <div class="mt-2 text-xs text-gray-600 font-medium text-center">
-                    <div>{{ item.label }}</div>
-                    <div class="text-gray-500 font-semibold">{{ item.dayNum }}</div>
+                    <!-- Label -->
+                    <div class="mt-4 text-xs text-gray-600 font-medium text-center absolute -bottom-6 w-full">
+                      <div>{{ item.label }}</div>
+                      <div class="text-gray-500 font-semibold">{{ item.dayNum }}</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
+               <!-- Spacer for labels -->
+               <div class="h-6"></div>
+               
+               <!-- Legend -->
+               <div class="flex items-center justify-center gap-4 mt-2 text-xs">
+                 <div class="flex items-center gap-1.5">
+                   <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                   <span class="text-gray-600">Completed</span>
+                 </div>
+                 <div class="flex items-center gap-1.5">
+                   <div class="w-2 h-2 rounded-full bg-amber-400 border border-amber-400"></div>
+                   <span class="text-gray-600">Pending</span>
+                 </div>
+               </div>
+
               <!-- Summary -->
-              <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+              <div class="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200 mt-2">
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-emerald-600">{{ formatCurrency(chartSummary.total) }}</div>
-                  <div class="text-xs text-gray-500 mt-1">Total 7 Hari</div>
+                  <div class="text-lg font-bold text-emerald-600">{{ formatCurrency(chartSummary.total) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Total Completed</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-blue-600">{{ formatCurrency(chartSummary.average) }}</div>
-                  <div class="text-xs text-gray-500 mt-1">Rata-rata/Hari</div>
+                  <div class="text-lg font-bold text-blue-600">{{ formatCurrency(chartSummary.average) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Avg Completed</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-purple-600">{{ formatCurrency(chartSummary.max) }}</div>
-                  <div class="text-xs text-gray-500 mt-1">Tertinggi</div>
+                  <div class="text-lg font-bold text-amber-500">{{ formatCurrency(chartSummary.pendingTotal) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Total Pending</div>
                 </div>
               </div>
+            </div>
+            </div>
+          </div>
+
+          <!-- Withdraw Chart Card -->
+          <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+            <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50/50 to-transparent">
+              <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                <div class="w-1 h-6 bg-gradient-to-b from-purple-600 to-purple-500 rounded-full"></div>
+                Grafik WD
+              </h2>
+            </div>
+
+            <div class="p-6">
+              <div v-if="loadingWithdrawChart" class="flex items-center justify-center py-12">
+                <div class="text-gray-400">Memuat data...</div>
+              </div>
+              <div v-else-if="withdrawChartData.length === 0" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                  <Icon name="document-text" size="lg" class="text-gray-300 mx-auto mb-2" />
+                  <p class="text-gray-400">Tidak ada data withdraw</p>
+                </div>
+              </div>
+              <div v-else class="space-y-4">
+              <!-- Chart Container -->
+              <div class="relative h-64">
+                <!-- Line SVG -->
+                 <svg class="absolute inset-0 w-full h-full overflow-visible z-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <!-- Completed Area -->
+                  <path
+                    :d="getChartAreaPath(withdrawChartData, 'heightCompleted')"
+                    class="text-purple-500 opacity-10"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <!-- Completed Line -->
+                  <path
+                    :d="getChartPath(withdrawChartData, 'heightCompleted')"
+                    fill="none"
+                    stroke="#9333EA" 
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"
+                    class="z-10 relative"
+                  />
+                   <!-- Pending Line -->
+                  <path
+                    :d="getChartPath(withdrawChartData, 'heightPending')"
+                    fill="none"
+                    stroke="#F97316" 
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-dasharray="4 4"
+                    vector-effect="non-scaling-stroke"
+                    class="z-10 relative"
+                  />
+                </svg>
+
+                <!-- Interaction Layer -->
+                <div class="absolute inset-0 flex items-end justify-between z-10 w-full h-full">
+                  <div 
+                    v-for="(item, index) in withdrawChartData" 
+                    :key="index"
+                    class="flex-1 flex flex-col items-center justify-end h-full group relative"
+                  >
+                    <!-- Dot on Completed line -->
+                    <div 
+                      class="absolute w-3 h-3 bg-white border-2 border-purple-500 rounded-full transition-transform group-hover:scale-125 z-20"
+                      :style="{ bottom: `${item.heightCompleted}%`, marginBottom: '-6px' }"
+                    ></div>
+                    
+                    <!-- Dot on Pending line -->
+                    <div 
+                      v-if="item.amountPending > 0"
+                      class="absolute w-2 h-2 bg-white border-2 border-orange-500 rounded-full transition-transform group-hover:scale-125 z-20"
+                      :style="{ bottom: `${item.heightPending}%`, marginBottom: '-4px' }"
+                    ></div>
+
+                    <!-- Vertical Hover Line -->
+                     <div class="absolute bottom-0 w-px bg-gray-300 border-l border-gray-300 border-dashed h-full opacity-0 group-hover:opacity-50 transition-opacity pointer-events-none z-0"></div>
+
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-[calc(100%-2rem)] mb-2 opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none" :style="{ bottom: `${Math.max(item.heightCompleted, item.heightPending)}%`, marginBottom: '12px' }">
+                      <div class="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                        <div class="font-semibold border-b border-gray-700 pb-1 mb-1">{{ item.date }}</div>
+                         <div class="flex items-center justify-between gap-3 text-purple-300">
+                          <span>Completed:</span>
+                          <span class="font-mono">{{ formatCurrency(item.amountCompleted) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 text-orange-400">
+                          <span>Pending:</span>
+                          <span class="font-mono">{{ formatCurrency(item.amountPending) }}</span>
+                        </div>
+                      </div>
+                      <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                    </div>
+                    
+                    <!-- Label -->
+                    <div class="mt-4 text-xs text-gray-600 font-medium text-center absolute -bottom-6 w-full">
+                      <div>{{ item.label }}</div>
+                      <div class="text-gray-500 font-semibold">{{ item.dayNum }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+               <!-- Spacer for labels -->
+               <div class="h-6"></div>
+               
+                <!-- Legend -->
+               <div class="flex items-center justify-center gap-4 mt-2 text-xs">
+                 <div class="flex items-center gap-1.5">
+                   <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+                   <span class="text-gray-600">Completed</span>
+                 </div>
+                 <div class="flex items-center gap-1.5">
+                   <div class="w-2 h-2 rounded-full bg-orange-500 border border-orange-500"></div>
+                   <span class="text-gray-600">Pending</span>
+                 </div>
+               </div>
+
+              <!-- Summary -->
+              <div class="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200 mt-2">
+                <div class="text-center">
+                  <div class="text-lg font-bold text-purple-600">{{ formatCurrency(withdrawChartSummary.total) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Total Completed</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-blue-600">{{ formatCurrency(withdrawChartSummary.average) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Avg Completed</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-lg font-bold text-pink-600">{{ formatCurrency(withdrawChartSummary.pendingTotal) }} <span class="text-xs text-gray-400 font-normal">USDT</span></div>
+                  <div class="text-[10px] text-gray-500 mt-1">Total Pending</div>
+                </div>
+              </div>
+            </div>
             </div>
           </div>
         </div>
@@ -154,6 +362,7 @@ definePageMeta({
 const isMobileMenuOpen = ref(false)
 const loading = ref(true)
 const loadingChart = ref(true)
+const loadingWithdrawChart = ref(true)
 
 // Statistics data
 const stats = ref({
@@ -167,7 +376,17 @@ const depositChartData = ref([])
 const chartSummary = ref({
   total: 0,
   average: 0,
-  max: 0
+  max: 0,
+  pendingTotal: 0
+})
+
+// Withdraw chart data
+const withdrawChartData = ref([])
+const withdrawChartSummary = ref({
+  total: 0,
+  average: 0,
+  max: 0,
+  pendingTotal: 0
 })
 
 const toggleMobileMenu = () => {
@@ -229,11 +448,10 @@ const fetchStats = async () => {
 const fetchDepositChart = async () => {
   loadingChart.value = true
   try {
-    // Get deposits from last 7 days
+    // Get deposits from last 7 days (all statuses)
     const response = await $fetch('/api/admin/deposits', {
       params: {
-        limit: 1000,
-        status: 'completed'
+        limit: 1000
       }
     })
 
@@ -253,38 +471,50 @@ const fetchDepositChart = async () => {
         const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' })
         const dayNum = date.getDate()
         
-        // Calculate total deposit for this day
+        // Filter deposits by date
         const dayDeposits = deposits.filter(deposit => {
           const depositDate = new Date(deposit.created_at)
           depositDate.setHours(0, 0, 0, 0)
           return depositDate.getTime() === date.getTime()
         })
         
-        const totalAmount = dayDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0)
+        // Calculate totals
+        const totalCompleted = dayDeposits
+          .filter(d => d.status === 'completed')
+          .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0)
+          
+        const totalPending = dayDeposits
+          .filter(d => d.status === 'pending' || d.status === 'verify')
+          .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0)
         
         last7Days.push({
           date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
           label: dayName,
           dayNum: dayNum,
-          amount: totalAmount,
+          amountCompleted: totalCompleted,
+          amountPending: totalPending,
           count: dayDeposits.length
         })
       }
       
-      // Calculate max for height percentage
-      const maxAmount = Math.max(...last7Days.map(d => d.amount), 1)
+      // Calculate max for height percentage (checks both completed and pending to scale chart correctly)
+      const maxCompleted = Math.max(...last7Days.map(d => d.amountCompleted), 0)
+      const maxPending = Math.max(...last7Days.map(d => d.amountPending), 0)
+      const maxAmount = Math.max(maxCompleted, maxPending, 1) // Ensure min 1 to avoid division by zero
       
       depositChartData.value = last7Days.map(item => ({
         ...item,
-        height: maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0
+        heightCompleted: (item.amountCompleted / maxAmount) * 100,
+        heightPending: (item.amountPending / maxAmount) * 100
       }))
       
       // Calculate summary
-      const total = last7Days.reduce((sum, d) => sum + d.amount, 0)
+      const totalCompleted = last7Days.reduce((sum, d) => sum + d.amountCompleted, 0)
       chartSummary.value = {
-        total: total,
-        average: total / 7,
-        max: maxAmount
+        total: totalCompleted,
+        average: totalCompleted / 7,
+        pendingTotal: last7Days.reduce((sum, d) => sum + d.amountPending, 0),
+        max: maxCompleted
       }
     }
   } catch (error) {
@@ -295,9 +525,114 @@ const fetchDepositChart = async () => {
   }
 }
 
+// Fetch withdraw chart data (last 7 days)
+const fetchWithdrawChart = async () => {
+  loadingWithdrawChart.value = true
+  try {
+    // Get withdraws from last 7 days (all statuses)
+    const response = await $fetch('/api/admin/withdraws', {
+      params: {
+        limit: 1000
+      }
+    })
+
+    if (response && response.success && response.data) {
+      const withdraws = response.data || []
+      
+      // Get last 7 days
+      const today = new Date()
+      const last7Days = []
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - i)
+        date.setHours(0, 0, 0, 0)
+        
+        const dateStr = date.toISOString().split('T')[0]
+        const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' })
+        const dayNum = date.getDate()
+        
+        // Filter withdraws by date
+        const dayWithdraws = withdraws.filter(w => {
+          const wDate = new Date(w.created_at)
+          wDate.setHours(0, 0, 0, 0)
+          return wDate.getTime() === date.getTime()
+        })
+        
+        // Calculate totals
+        const totalCompleted = dayWithdraws
+          .filter(w => w.status === 'completed')
+          .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0)
+
+        const totalPending = dayWithdraws
+          .filter(w => w.status === 'pending' || w.status === 'verify')
+          .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0)
+        
+        last7Days.push({
+          date: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+          label: dayName,
+          dayNum: dayNum,
+          amountCompleted: totalCompleted,
+          amountPending: totalPending,
+          count: dayWithdraws.length
+        })
+      }
+      
+      // Calculate max for height percentage
+      const maxCompleted = Math.max(...last7Days.map(d => d.amountCompleted), 0)
+      const maxPending = Math.max(...last7Days.map(d => d.amountPending), 0)
+      const maxAmount = Math.max(maxCompleted, maxPending, 1)
+      
+      withdrawChartData.value = last7Days.map(item => ({
+        ...item,
+        heightCompleted: (item.amountCompleted / maxAmount) * 100,
+        heightPending: (item.amountPending / maxAmount) * 100
+      }))
+      
+      // Calculate summary
+      const totalCompleted = last7Days.reduce((sum, d) => sum + d.amountCompleted, 0)
+      withdrawChartSummary.value = {
+        total: totalCompleted,
+        average: totalCompleted / 7,
+        pendingTotal: last7Days.reduce((sum, d) => sum + d.amountPending, 0),
+        max: maxCompleted
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch withdraw chart:', error)
+    withdrawChartData.value = []
+  } finally {
+    loadingWithdrawChart.value = false
+  }
+}
+
 // Load data on mount
 onMounted(() => {
   fetchStats()
   fetchDepositChart()
+  fetchWithdrawChart()
+  fetchWithdrawChart()
 })
+
+// SVG Helpers
+const getChartPath = (data, key = 'height') => {
+  if (!data || data.length === 0) return ''
+  return data.map((item, index) => {
+    // Aligns with the center of flex-1 columns
+    const x = ((index + 0.5) / data.length) * 100
+    const y = 100 - (item[key] || 0)
+    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+  }).join(' ')
+}
+
+const getChartAreaPath = (data, key = 'height') => {
+  if (!data || data.length === 0) return ''
+  const linePath = getChartPath(data, key)
+  
+  // Start from first point X, go down to 100, go to last point X
+  const firstX = (0.5 / data.length) * 100
+  const lastX = ((data.length - 0.5) / data.length) * 100
+  
+  return `${linePath} L ${lastX} 100 L ${firstX} 100 Z`
+}
 </script>
